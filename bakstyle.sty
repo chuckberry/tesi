@@ -1,0 +1,354 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                          %
+%  Patrick's (and Paschi's) Thesis Layaout Package                         %
+%                                                                          %
+%    Copyright (C) 2005 by derkling                                        %
+%    derkling@users.sourceforge.net                                        %
+%    + stefano.galli@gmail.com                                             %
+%                                                                          %
+%    This program is free software; you can redistribute it and#or modify  %
+%    it under the terms of the GNU General Public License as published by  %
+%    the Free Software Foundation; either version 2 of the License, or     %
+%    (at your option) any later version.                                   %
+%                                                                          %
+%    This program is distributed in the hope that it will be useful,       %
+%    but WITHOUT ANY WARRANTY; without even the implied warranty of        %
+%    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         %
+%    GNU General Public License for more details.                          %
+%                                                                          %
+%    You should have received a copy of the GNU General Public License     %
+%    along with this program; if not, write to the                         %
+%    Free Software Foundation, Inc.,                                       %
+%    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             %
+%                                                                          %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\ProvidesPackage{mythesis}
+
+%------------------------------------------------------------------------------
+% THESIS SETTINGS
+%------------------------------------------------------------------------------
+% Thesis author
+\newcommand{\thesisauthor}{Matteo Carnevali Stefano Bosisio}
+
+% Thesis title
+\newcommand{\thesistitle}{
+	Constrained Power Management% a collaborative formal model and framework to manage Quality of Service in modern Operating Systems
+}
+
+% Thesis language
+\newcommand{\thesislanguage}{english}
+
+%------------------------------------------------------------------------------
+% FONT SETTINGS
+%------------------------------------------------------------------------------
+%\renewcommand\familydefault{cmss}
+
+%------------------------------------------------------------------------------
+% USED PACKAGES
+%------------------------------------------------------------------------------
+\usepackage[\thesislanguage]{babel}
+\usepackage[latin1]{inputenc} % was \usepackage[latin1]{inputenc}
+\usepackage[active]{srcltx}
+\usepackage[\thesislanguage,first,bottomafter,timestamp,conditional]{draftcopy}
+\usepackage[nobottomtitles,clearempty]{titlesec}
+\usepackage{lettrine}
+\usepackage{floatflt}
+%\usepackage[font={sf},textfont=md,format=hang,margin=10pt]{caption}
+\usepackage[hang,small,sf,margin=10pt]{caption}
+\usepackage{subfig}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{multicol}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{prettyref}
+\usepackage[includeAbstract]{optional}
+\usepackage[dvips]{graphicx}
+\usepackage[english,figure,plain,algochapter,linesnumberedhidden,vlined]
+		{algorithm2e}
+\usepackage{makeidx}
+\usepackage{pifont}
+\usepackage{amsmath}
+\usepackage{lineno}
+\usepackage{rotating}
+\usepackage{booktabs}
+%%%%%%%%%%%%%%% MIEI %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{gensymb}
+
+
+%\usepackage{epsfig,psfig,amsmath}
+%\usepackage{ifthen}
+%\usepackage{latexsym}
+%\usepackage{amssymb}
+%\usepackage{amsmath}
+%\usepackage{amsfonts}
+%\usepackage{varioref}
+%\usepackage{pifont}
+
+%\usepackage{algorithm}
+%\usepackage{rotating}
+%\usepackage{gastex}
+%\usepackage{moreverb}
+%\usepackage{subfigure}
+%\usepackage{ccfonts}
+% FONTS SELECTION
+\usepackage{mathpazo}
+\usepackage{helvet}
+\usepackage{courier}
+\usepackage{listings}
+
+
+
+
+
+
+\def\@univ{Politecnico di Milano}
+\def\p@fac{Facolt\`a di}
+\def\@fac{Ingegneria dell'Informazione}
+\def\p@cdl{Corso di Laurea Specialistica in}
+\def\@cdl{Ingegneria Informatica}
+\def\p@tesi{Thesis title}
+\def\p@laureando{Laureando} % oppure Laureanda se femmina
+\def\p@relatore{Relatore}   % oppure Relatori se piu' di uno
+\def\p@aacc{Anno Accademico}
+\def\p@correlatore{Correlatore}
+%%
+\newcommand{\universita}[1]{\gdef\@univ{#1}}
+\newcommand{\facolta}[1]{\gdef\@fac{#1}}
+\newcommand{\corsodilaurea}[1]{\gdef\@cdl{#1}}
+\newcommand{\relatore}[1]{\gdef\@relatore{#1}}
+\newcommand{\correlatore}[1]{\gdef\@correlatore{#1}}
+\newcommand{\aacc}[1]{\gdef\@aacc{#1}}
+%%
+\renewcommand{\maketitle}{%
+  \thispagestyle{empty}
+  \begin{center}
+    \textsc{\Large \@univ} \\
+    \rule{\linewidth}{0.01mm} \medskip\\
+    {\Large \p@fac\ \@fac} \medskip\\
+    {\large \p@cdl\ \@cdl} \\
+    \vfill
+{\includegraphics[width=0.25\textwidth]{images/logo_poli.eps}} \bigskip \\
+    \textsc{\huge \@title} \\
+    \textsc{\LARGE a collaborative formal model and framework for resource management in modern Operating Systems}\bigskip   \\
+    \end{center}
+    \begin{tabular}{p{8cm}p{10cm}}
+      	&	\\
+Autori: & Relatore: \\
+\textbf{Stefano BOSISIO} & \textbf{Prof. William Fornaciari}\\
+matr. 708243 &	\\\\
+\textbf{Matteo CARNEVALI} & Correlatore: \\
+matr. 708330 &	\textbf{Ing. Patrick Bellasi}
+	
+  \end{tabular}
+  \vfill
+  \begin{center}
+    \rule{\linewidth}{0.01mm} \\
+    {\p@aacc\ \@aacc}
+  \end{center}   
+  \clearpage
+}%
+%%
+
+
+
+%Constrained Power Management: a collaborative formal model and framework for resource management in modern Operating Systems
+
+
+
+
+
+
+
+
+%------------------------------------------------------------------------------
+% PACKAGES SETTINGS
+%------------------------------------------------------------------------------
+
+% prettyref
+\newrefformat{fig}{Fig.~\ref{#1}}% on page \pageref{#1}} % was textsf
+\newrefformat{tab}{Tab.~\ref{#1}}% on page \pageref{#1}} % was textsf
+\newrefformat{lis}{Listing~\ref{#1}}% on page \pageref{#1}} % was textsf
+%\newrefformat{tab}{Table \ref{#1} on page \pageref{#1}}
+%\newrefformat{fig}{Figure \ref{#1} on page \pageref{#1}
+\newrefformat{cha}{Chap.~\ref{#1} on page \pageref{#1}}
+\newrefformat{sec}{Sec.~\ref{#1} on page \pageref{#1}}
+\newrefformat{subsec}{Par.~\ref{#1} on page \pageref{#1}}
+
+\newrefformat{ssec}{Par.~\ref{#1} on page \pageref{#1}}
+\newrefformat{sssec}{Par.~\ref{#1} on page \pageref{#1}}
+\newrefformat{par}{Par.~\ref{#1} on page \pageref{#1}}
+
+\newrefformat{app}{Appendix~\ref{#1} on page \pageref{#1}}
+\newrefformat{alg}{\textit{Figure~\ref{#1}} on page \pageref{#1}} % was textsf
+\newrefformat{eq}{Eq.~\eqref{#1} on page \pageref{#1}}
+
+
+%------------------------------------------------------------------------------
+% LENGTHS & PAGE LAYOUT
+%------------------------------------------------------------------------------
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% MARGINI E INTERLINEA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\geometry{verbose,a4paper,tmargin=3.5cm,bmargin=3.5cm,lmargin=3.5cm,rmargin=3.5cm}
+\linespread{1.35}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% STILE PAGINE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\pagestyle{fancy}
+\renewcommand{\chaptermark}[1]{\markboth{#1}{}}
+\renewcommand{\sectionmark}[1]{\markright{\thesection\ #1}}
+\fancyhf{}
+\fancyhead[LE,RO]{\bfseries\thepage}
+\fancyhead[LO]{\bfseries\rightmark}
+\fancyhead[RE]{\bfseries\leftmark}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\footrulewidth}{0.3pt}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%% INTESTAZIONI E PIE DI PAGINA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\lfoot{\scriptsize}
+\cfoot{}
+\rfoot{\scriptsize Constrained Power Management}
+\addtolength{\headheight}{0.5pt}
+\fancypagestyle{plain}{%
+	\fancyhead{} %
+	\renewcommand{\headrulewidth}{0pt} %
+}
+
+% figures geometry
+\newlength{\widefigure}
+\newlength{\mediumfigure}
+\newlength{\narrowfigure}
+\newlength{\normalfigure}
+\newlength{\smallfigure}
+\newlength{\tinyfigure}
+\setlength{\widefigure}{4.9in}
+\setlength{\mediumfigure}{4in}
+\setlength{\narrowfigure}{3in}
+\setlength{\normalfigure}{2.5in}
+\setlength{\smallfigure}{2in}
+\setlength{\tinyfigure}{1.7in}
+
+
+%\setlength{\baselineskip}{2\baselineskip}
+
+%------------------------------------------------------------------------------
+% ENV STYLES
+%------------------------------------------------------------------------------
+% --- Headers and footers ---
+%\usepackage[nobottomtitles,clearempty]{titlesec}
+\usepackage[Lenny]{fncychap}
+% --- List lables ---
+\renewcommand{\labelitemi}{\ding{"6F}}
+% --- Footnote Style ---
+\renewcommand{\footnoterule}{\vfill \vspace*{3pt}%
+	\hrule width 2in height 1pt \vspace*{2.6pt} }
+% --- List of Figures, Tables and Codes
+%\makeatletter
+%\renewcommand\ext@table{lof}
+%\renewcommand\l@figure[2]{\@dottedtocline{1}{1.5em}{2.3em}
+%	{Fig.~#1}{#2 } }
+%\renewcommand\l@table[2]{\@dottedtocline{1}{1.5em}{2.3em}
+%	{Tab.~#1}{#2}}
+%\makeatother
+
+\newcommand{\figurecaption}[1]{\small{\textnormal{\textsf{#1}}}}
+\newcommand{\tablecaption}[1]{\small{\textnormal{\textsf{#1}}}} % was sl
+\newcommand{\listcaption}[1]{\small{\textnormal{\textsf{#1}}}} %was it
+%\newcommand{\figurecaption}[1]{\textsf{\textbf{\caption{\textnormal{#1}}}}}
+%\newcommand{\tablecaption}[1]{
+%		\textsf{\textbf{\caption{\textnormal{\textsl{#1}}}}}}
+%\newcommand{\listcaption}[1]{
+%		\textsf{\textbf{\caption{\textnormal{\textit{#1}}}}}}
+
+\newcommand{\defsep}{ - }
+
+%------------------------------------------------------------------------------
+% NEW COMMANDS: GENERIC
+%------------------------------------------------------------------------------
+
+\newcommand{\dedicatedto}[1]{
+    \thispagestyle{empty}
+    \vspace*{2in}
+	\hfill
+    \emph{#1}
+    }
+\newcommand{\acknowledge}[1]{
+    \clearpage
+    \thispagestyle{empty}
+    \vspace*{2in}
+    \textbf{\Huge Ringraziamenti}\\
+    \vspace{\parskip}\\
+    \hspace*{\parindent}\itshape #1 \normalfont
+}
+
+\newcommand{\initialquote}[2]{
+	\clearpage
+	\thispagestyle{empty}
+	\vspace*{5cm}
+	\hspace*{5cm}
+	\begin{minipage}{7.5cm}
+		\emph{#1}
+	\end{minipage}
+	\begin{flushright}
+		#2
+	\end{flushright}
+}
+
+\newcommand{\chapCite}[2]{
+	\vspace{-0.5cm}
+	\hfill
+	\begin{minipage}{0.5\textwidth}
+		\flushright
+		``\small\textit{#1}''
+		\\
+		\vspace{0.1cm}
+		{\normalfont#2}
+	\end{minipage}
+	\vspace{2cm}
+}
+
+\newcommand{\boxNote}[1]{
+	\begin{center}
+		\begin{tabular}{p{0.8\textwidth}|}
+			\textsf{\textsl{#1}} \\
+			\hline
+		\end{tabular}
+	\end{center}
+}
+
+% My self-defined glossary entry
+%\newcommand{\dictDef}[1]{#1$^{\dagger}$}
+\renewcommand{\glossary}[1]{#1$^{\dagger}$}
+% Append "et.al." to article's author list
+\newcommand{\etal}{ \textit{et.~al.} }
+%Atomic
+\hyphenation{Atomic}
+\newcommand{\atomic}{Atomic}
+%TrIBeS
+%\newcommand{\tribes}{\begin{hyphenrules}{nohyphenation}TrIBeS\end{hyphenrules}}
+\hyphenation{TrIBeS}
+\newcommand{\tribes}{TrIBeS}
+%Tune
+\hyphenation{Tune}
+\newcommand{\tune}{Tune}
+% ARM7TDMI
+\newcommand{\arm}{$ARM7TDMI$}
+
+% Codice
+\newcommand{\codeFormat}[1]{\mbox{\textbf{\texttt{#1}}}}
+\newcommand{\codeNote}{\ding{43}}
+%\SetAlFnt{textbf}?!?!?
+%\SetAlCapFnt{\textbf}?!?!?
+%\SetTitleSty{textit}{12pt}?!?!
+
+
+%------------------------------------------------------------------------------
+% TEMPORARY NEW COMMANDS
+%------------------------------------------------------------------------------
+
+%\renewcommand\cite[1]{
+%    \textit{[#1]}
+%}
+

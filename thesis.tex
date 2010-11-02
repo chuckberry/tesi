@@ -1,0 +1,89 @@
+\documentclass[a4paper,11pt,twoside]{book}
+\usepackage{mythesis}
+\usepackage{appendix}
+
+%\usepackage[english]{babel}
+%\usepackage[latin1]{inputenc}
+%\usepackage{subfig}
+%\usepackage{array}
+%\usepackage{amsmath}
+\usepackage{longtable}
+\usepackage{color}
+\usepackage{colortbl}
+\usepackage{bibtopic}
+%\usepackage{hyperref}
+
+%\usepackage{url}
+
+
+\makeindex
+\setcounter{secnumdepth}{3}
+
+\begin{document}
+
+\title{title}
+\author{Matteo Marini}
+
+\universita{Politecnico di Milano}
+\facolta{Ingegneria dell'Informazione}
+\corsodilaurea{Ingegneria Informatica}
+
+\relatore{Prof. William Fornaciari}
+\correlatore{Ing. Patrick Bellasi}
+\aacc{2009-2010}
+
+\maketitle
+
+\cleardoublepage
+
+\newpage
+\pagenumbering{roman}
+\setcounter{tocdepth}{2}
+\tableofcontents
+
+\cleardoublepage 
+\newpage
+\pagenumbering{arabic}
+
+\include{chapter0_intro}
+\cleardoublepage
+\include{chapter1}
+\cleardoublepage
+\include{chapter2}
+\cleardoublepage
+\include{chapter3}
+\cleardoublepage
+\include{conclusions}
+\cleardoublepage
+\include{italian}
+
+% \clearpage 
+% \newpage
+\cleardoublepage
+
+%\begin{appendices}
+%
+%\include{a1/Appendix_LinearProgramming}
+%\cleardoublepage
+%\end{appendices}
+%\cleardoublepage
+%\include{italian}
+
+% \clearpage 
+% \newpage
+%\cleardoublepage
+
+
+\begin{btSect}[phjcp]{thesis}
+ \chapter*{Bibliography}
+ \btPrintAll
+\end{btSect}
+
+\begin{btSect}[phjcp]{weblinks}
+ \chapter*{Webography}
+ \btPrintAll
+\end{btSect}
+
+
+\end{document}
+
