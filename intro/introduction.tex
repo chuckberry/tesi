@@ -1,0 +1,86 @@
+In the quest for the highest CPU performances, hardware developers are faced with a difficult dilemma. On one hand, the Moore's Law does not apply to 
+computational power any more, that is, computational power is no longer doubling every 18 months as in the past. On the other hand, power consumption 
+continues to increase more than linearly with the number of transistors included in a chip, and the Moore's Law still holds for the number of transistors 
+in a chip.
+Several technology solutions have been adopted to solve this dilemma. Some of them try to reduce the power consumption by sacrificing computational power,
+usually by means of frequency scaling, voltage throttling, or both. Other solutions try to increase the Instruction Level Parallelism (ILP) inside a 
+processor, in order to get more computational power from the CPU without increasing power consumption. But nowadays the penalty of a cache miss 
+(which may stall the pipeline) or of a miss-predicted branch (which may invalidate the pipeline) has become way too expensive.
+Already in the early 2000's, it was clear that the most effective way to increase computational power and reduce power consumption was to parallelize
+task execution. For this reason it was introduced the Simultaneous MultiThreading (SMT), a technology that allowed to execute 
+concurrently two threads on the same cpu. Nowadays it was introduced multicore technolgy that consist of N superscalar processors with SMT 
+put in the same chip. This tecnology allows a great parallelization of task execution.
+With reference to memory organisation, multiprocessor systems are classified into two groups:
+
+\begin{itemize}
+	\item Centralised Shared Memory Architectures: in this architecture, there are multiple cores connected to a single shared memory. If all cores are
+	      equal this architecture is called simmetric multiprocessor (SMP)
+	\item Distributed Memory Architecture: in this architecture each processor has its own memory module and memory access time depends on the memory 
+	      location relative to a processor. Non-uniform memory access (NUMA) processor are included in this category of architecture
+\end{itemize}
+
+Multicore architectures have been adopted by most chip manufacturers. Dual-core chips are commonplace, and numerous four and eight core options exist. 
+In the coming years, per-chip core counts will continue to increase: Intel has claimed that it will release 80-core chips as early as 2013. 
+The shift to multicore technologies is a watershed event, as it fundamentally changes the "standard" computing platform in many settings to be a 
+multiprocessor.
+
+Even many embedded systems are starting to adopt multicore architectures, because theese processors can provide a large increment of computational power,
+with small increase in power consumption, that is a very important aspect for this type of systems.
+But there is an obstacle to use of theese architectures in this sector and in particular in Real-Time systems.
+In most multicore platforms, different cores share onchip caches. Imagine this situation: there are three Real-time tasks: A, B and C. 
+A uses 512KB of memory, B uses 768KB and C uses 256KB. Our platform has a dual-core chip. Shared onchip cache is of 1MB.
+There are two possible case of scheduling. In The first case A and C (or B and C) are scheduled. There is enough space in cache to alloc their resources, 
+and it is good. In the second case A is scheduled with B: cache trashing occurs. Performance of two tasks could get worse respect previous case, because 
+there isn't any guarantee that A or B may find data in shared cache and, furthermore, it is impossible to predict A or B duration, because if A is 
+scheduled with B, it will have a certain duration. Instead, if A is scheduled with C, it will have another duration.
+In other words: a task's duration depends from which other task is scheduled with it and, for this reason, using common Real-Time scheduling algorithms in 
+multicore systems, well developed techinques for timing analysis of embedded software used in single processor systems are no loger useful, therefore 
+new techinques are needed to estimate the worst-case execution time (WCET) of real-time tasks for this kind of platform. 
+It is clear that the scheduler plays an important role to improve performance and predictability of the applications. Nowadays, it is 
+important to develop scheduling algorithms "cache-aware", that is a scheduler that, to choose on which cpu to put a task, it take care about how scheduled 
+tasks use cache memory, in order to avoid cache trashing.
+This thesis is the prosecution of the work carried out by Lucas De Marchi. He has tried to make the Linux Real-Time scheduler cache-aware
+introducing the concept of taskaffinity. In this work, I have tried to improve the concept of taskaffinity and I 
+have studied the behaviour of this mechanism on different multicore architectures.
+
+\section{State of the art}
+\label{sec:StateOfTheArt}
+
+Although the problem to design "cache aware" scheduling algorithms is an old and well-known problem for over 20 years and multicore processors are 
+largely used, nowadays operating systems don't implement this kind of algorithms and in literature there are only a few works that study this problem. 
+The most of recent research works related to this argument consist of profiling activities with the aim to demostrate and build a model that show how
+an unfair cache sharing between concurrent threads may slow down them and cause sub-optimal throughput, cache trashing and, in some cases, thread 
+starvation for threads that fail to occupy sufficient cache space to make good progress.
+The first well-documented work related to this kind of scheduling algorithms, was developed at the Stanford University.
+At the end of 80's, the Computer Systems Laboratory at Stanford University designed a prototype of a shared-memory multiprocessor called DASH. 
+Its architecure was very similar to that used in modern SMP processors. DASH was able to incorporate up to 64 high-performance RISC microprocessor. 
+In order to exploit full potentiality of this machine, they developed a suitable runtime system to use with DASH, and they designed COOL language. 
+It was an extension of C++, that introduced some statements to facilitate expression of medium to large grain parallelism and to define which was the 
+\textit{data reference patterns} of the program.
+The COOL compiler was able to automatically extract fine-grain parallelism for architectures that, like DASH, supported such a level of concurrency,
+and extract information about use of cache made by applications. Using theese informations, the runtime system could ensured parallelism desired by 
+programmer and try to reduce cache miss rate of each task, because this system "knew", for each task, which were the objects referenced by it, so 
+it distributed tasks and objects in order to make them close.
+In plain words, using additional informations provided by programmer and exploiting the principle of data locality, the runtime system decided where to 
+alloc objects and it assigned a task to a cpu that contained objects referenced by it in its cache. This work shows how a smart use of cache is a 
+problem that involves all aspect of software engineering, from the compiler to scheduler and memory managment system.
+This infrastructure is based on programmer's directives that define behaviour of scheduler, and theese directives are given at compile time, therefore 
+it is an offline mechanism.
+
+Interesting works made in recent years exploit another strategy. They don't introduce new programming language or sophisticated runtime environment, but 
+they implement a raw profiler that, at runtime, it tries to understand how much cache space a task requires, in order to infer which tasks could cause
+cache trashing if they would be executed concurrently.
+To make this job, the profiler executes a periodical tuning phase in which it analyzes miss rate of each task, in this way it is possible understand the 
+amount of space used by a task. According to theese informations, two or more task are scheduled on different cpus only if 
+they don't cause cache trashing. Theese works are not refined as COOL project, but they present good results with SPEC2000 and 
+LITMUS \footnote{It is a Linux-based testbed developed by them that supports multiprocessor real-time scheduling policies within Linux} benchmarks, 
+furthermore this kind of works was experimented with good outcome also in embedded systems.
+
+
+\section{Objectives of this thesis work}
+\label{sec:ObjectiveOfThesis}
+
+
+\section{Organization of the thesis}
+\label{sec:OrganizationThesis}
+
