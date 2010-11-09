@@ -1,0 +1,81 @@
+In this chapter we present which are optimization performend and why. we see ... TODO 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Scheduler architecture on 2.6.34}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Taskaffinity behaviour}
+
+TODO test con diverse architetture e buffer
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Patch structure}
+
+The current version of taskaffinity enforces reuse of cache memory, because it producers and consumers are executed subsequently on the same cpu. In this
+way, there are more opportunities to find shared resources in L1 cache. Scheduler "knows" which tasks have a taskaffinity thanks to implemented syscalls:
+sched\_add\_taskaffinity, and sched\_del\_taskaffinity TODO cite lcs, in this way it is possible to know where producer are executed and, consequenlty, 
+where to put consumers.
+
+The logic of taskaffinity influences two important parts of the life of task, they are wake up and migration of a task. TODO risveglio
+A task can wake up for different reasons, such as: task's creation (in that case we have the first wake up), a semaphore becomes unlocked and so on.
+In all those cases different kernel function are called, but at the end the \texttt{try\_to\_wake\_up} is called. This function receives in input the
+to be waken task, that we will call $p$, it locks the runqueue where $p$ was last executed and call \texttt{select\_task\_rq\_rt}. This function decides
+which will be the cpu, and then the runqueue, where $p$ will be enqueued. In order to choose a cpu that has executed a $p$'s producer, the function loops
+for all dependencies present in the $p$'s taskaffinity list and build a mask, called \textit{affinity\_mask} with cpus that have last executed a task 
+present in $p$'s taskaffinity list. Finished the loop, the function returns the cpu with runqueue that have the lowest number of Real-Time tasks. If the 
+mask is empty, the function returns the cpu where $p$ was last executed. Note that \texttt{select\_task\_rq\_rt} is class specific, therefore implemented 
+logic don't touch fair task.
+
+When a task should migrate is well described in TODO cita lcs. In the current version of taskaffinity, a task that "respect" taskaffinity, that is a task 
+that was enqueued on a runqueue according to its taskaffinity relations, isn't able to migrate. In plain words, the logic that performs migration of 
+Real-time tasks was modified and it doesn't touch tasks that "respect" taskaffinity.
+
+The aim of this policy is clear: it tries to select the best cpu when a task wakes up and it block the task on a runqueue until its execution. For this
+reason the key point of taskaffinity logic is the select\_task\_rq\_rt.
+
+The current version of taskaffinity enforces reuse of cache memory, because producers and consumers should be executed subsequently on the same cpu. In this
+way, there are more opportunities to find shared resources in L1 cache. Moreover, it is possbile that before to execute consumer on the designated cpu, 
+another generic task "steal" the cpu at consumer and execute its work on that cpu modifing the content of L1 cache.
+
+TODO figura che fa vedere un task che si inserisce
+
+In the \texttt{select\_task\_rq\_rt}, this fact is not considered. The current version of taskaffinity ensures a weak concept of temporal locality because 
+it doesn't ensure, when it is possible, that the next task executed after a producer is a consumer. In addition, the migration policy is too strong. Pull
+and push functions mantains the system balanced, and guarantee that a Real-time task can be executed when a cpu is idle or is executing a fair task.
+Therefore, the deny to pull and push task that respect taskaffinity can degrade singnificantly the throughput of the application.
+
+The aim of the patch developed it to improve the concept of temporal locality and to improve the migration policy in order to use also the functions 
+involved in the migration mechanism to exploit the concept of taskaffinity. Furthermore, the patch make taskaffinity more robust adding synchronization 
+to data structures used.
+
+%-----------------------------------------------------------------------------
+\subsection{Temporal locality}
+
+To ensure that a consumer will be the next executed task after a producer, it is necessary to change what \texttt{select\_task\_rq\_rt} "see". As I 
+previously said, during its loop, \texttt{select\_task\_rq\_rt} check for cpu that \textbf{have executed} a task in $p$'s taskaffinity list. It means
+that, in that moment, theese cpus could be executing a task that it is not a producer and then, L1 could be already dirty. For this reason, at every 
+runqueue was added a field named \texttt{last\_tsk} that contains the last task executed in that runqueue. This field is updated at each context switch 
+if the next task to be executed is different from idle. In this way, if current task on runqueue is not idle, this field represents, the task in execution. 
+
+
+
+
+[choice of cpu] The choice of cpu where to execute consumers is the key point to TODO far funzionare taskaffinity. To improve the temporal locality
+
+[insertion on a run queue] Una volta che la cpu is choosen, the kernel calls enqueue\_task to insert the task on runqueue choosen. This procedure is 
+followed for each task. The idea is: if a task has taskaffinity and choosen cpu satisfies taskaffinity criteria, the task will be enqueued on the top of 
+runqueue and not on the bottom. In this way, the next task that will be executed on that runqueue will be the consumer
+
+
+
+%-----------------------------------------------------------------------------
+\subsection{Synchronization}
+
+
+
+
+%-----------------------------------------------------------------------------
+\subsection{Migration policy}
+
+
