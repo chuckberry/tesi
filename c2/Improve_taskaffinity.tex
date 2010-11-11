@@ -1,81 +1,212 @@
+TODO potevamo dire alla select di prendere il lock ma questo modificava troppo la logica del kernel, tenere un approccio self-contained
+TODO dove si dice che il throughput si disfa dire che la predictability aumenta per\'o le migration dan fastidio
+TODO richiamare la definizione di taskaffinity e dire cosa ricevono in input le syscalls
+TODO occhio che la select non ha nessun lock
+TODO ricordarsi che ci sono la push\_rt\_task e la pull-rt-task
+
 In this chapter we present which are optimization performend and why. we see ... TODO 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Scheduler architecture on 2.6.34}
 
+Now I will introduce which are the part of scheduling procedure interested by taskaffiniy logic and which are the most important change carried out from
+2.6.31 kernel version to 2.6.34.
+
+%-----------------------------------------------------------------------------
+\subsection{Awakening of a task}
+
+The current version of taskaffinity patch, is applied to kernel version 2.6.31. Therefore it is necessary porting this patch to the current kernel version 
+2.6.34. Now I will briefly describe what is the mechanism used to schedule a Real-time task in the current kernel version. 
+TODO which are mechanisms interested by taskaff logic.
+
+The scheduling procedure for a task starts when it wakes up. A task can wake up for different reasons, such as: a semaphore becomes unlocked, task's creation
+(in that case it has the first wake up) and so on. In all those cases different kernel function are called, but at the end they call 
+\texttt{try\_to\_wake\_up} function. It receives in input the to be waken task, that we will call $p$, it locks the runqueue where $p$ was last 
+executed and checks if p is not already waken and if it is not already on a runqueue. In the first case the function release lock and exit, in the second
+case the function check if a \textit{push} is necessary: what is \textit{push} will be clear soon. If two checks fail, the \texttt{try\_to\_wake\_up} 
+releases lock and calls \texttt{select\_task\_rq\_rt}.
+
+This function is class specific and receives in input task $p$ from \texttt{try\_to\_wake\_up}. The aim of this function is to choose on which cpu put $p$ 
+It's important to note that this function is called when all acquired locks are released. To choose the best cpu, \texttt{find\_lowest\_rq} is called.
+This function receives in input $p$, it returns a cpu that is executing a task with lower priority than $p$'s priority and if it don't find any cpu, it 
+returns the cpu that have last executed $p$. When \texttt{find\_lowest\_rq} returns, \texttt{select\_task\_rq} check if selected cpu is online, in that case
+returns, otherwise discards cpu and returns an any online cpu that "respects" $p$'s cpu affinity.
+
+After the choice of cpu, \texttt{try\_to\_wake\_up} acquires the lock on the cpu, and then on runqueue selected, updates some $p$'s statistics, enqueues 
+$p$ on selected runqueue and update $p$'s state in TASK\_RUNNING. After this step, it checks if $p$ has priority grater than priority of the task currently
+executed on selected runqueue, in that case it calls \texttt{need\_resched} function in order to perform the context-switch on selected runqueue at the
+end of \texttt{try\_to\_wake\_up}. If $p$ is not the higher priority task, \texttt{try\_to\_wake\_up} go to the last step: to check if $p$ must be migrated
+from the selected runqueue. Finished this step \texttt{try\_to\_wake\_up} returns.
+
+The most important differences from version 2.6.31 related to Real-time tasks regard principally \texttt{try\_to\_wake\_up}. 
+
+TODO figure codici e sotto codice degli stati di un task
+
+In 2.6.31 kernel version fig. TODO ref (a), the choice carried out by \texttt{select\_task\_rq} could be useless, because multiple istances of 
+\texttt{try\_to\_wake\_up} for the same task can be executed simultaneously and there is not any mechanism to synchronize them, therefore value assigned 
+by \texttt{select\_task\_rq} at line TODO ref could change. In the 2.6.34 kernel version, a new task's state named TASK\_WAKING was introduced. With this 
+state a \texttt{try\_to\_wake\_up} indicates that the task's awakening is in progress, therefore any other istance of \texttt{try\_to\_wake\_up} can return.
+
+TODO codice
+
+How this mechanism works is simple. At line TODO codice lock on task's runqueue is acquired. The next statement is a check on task's state. Input parameter 
+\textit{state} is never equal to TASK\_WAKING, therefore, according to definitions showed in fig. TODO stato task, when \texttt{p->state} is equal to 
+TASK\_WAKING, the if statement is true and the function exit. But, when \texttt{p->state} becomes equal to TASK\_WAKING? Upon executing the if statement.
+
+TODO codice 
+
+After relased lock on $p$'s runqueue, \texttt{select\_task\_rq} is called and cpu is choosen, then the lock on selected runqueue is acquired.
+It is interesting to note, that in the current kernel version, kernel preemption is disabled over the whole \texttt{try\_to\_wake\_up}. This is a big 
+difference from 2.6.31 kernel version. The reason of this modification is not documented and it is not clear.
+
+%-----------------------------------------------------------------------------
+\subsection{Migration policy}
+
+Another important part of scheduling procedure is the migration policy. Migration of Real-time tasks is made in three way: 
+
+\begin{description}
+\item[Push tasks:] when a runqueue becomes overloaded, that is it has more than one Real-time waiting on it  scheduler running on that CPU may decide to push tasks to other CPUs. It may also happen when system 
+employs some kind of priority among processes: if a high priority task is woken up, it might run on the same CPU before it has slept, or be pushed to 
+another runqueue.
+
+\end{description}
+
+
+
+
+
+
+
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Taskaffinity behaviour}
 
-TODO test con diverse architetture e buffer
+TODO test con diverse architetture e buffer cfr trace su varie arch dire che a 4KB lo Xeon risente del kernel, magari far vedere il peso della sched lat
+
+TODO i cache miss e i tempi medi di esecuzione
+
+TODO dire come a 32KB la cache non conti niente
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Patch structure}
 
-The current version of taskaffinity enforces reuse of cache memory, because it producers and consumers are executed subsequently on the same cpu. In this
-way, there are more opportunities to find shared resources in L1 cache. Scheduler "knows" which tasks have a taskaffinity thanks to implemented syscalls:
-sched\_add\_taskaffinity, and sched\_del\_taskaffinity TODO cite lcs, in this way it is possible to know where producer are executed and, consequenlty, 
-where to put consumers.
+The current version of taskaffinity enforces reuse of cache memory, because producers and consumers, that have a taskaffinity relation between them, are 
+executed subsequently on the same cpu. In this way, there are more opportunities to find shared resources in L1 cache. Scheduler "knows" which tasks have a 
+taskaffinity thanks to implemented syscalls: \texttt{sched\_add\_taskaffinity}, and \texttt{sched\_del\_taskaffinity} TODO cite lcs, in this way, the 
+programmer defines which tasks have taskaffinity and then it is possible to know where producer are executed and, consequenlty, where to put consumers.
 
-The logic of taskaffinity influences two important parts of the life of task, they are wake up and migration of a task. TODO risveglio
-A task can wake up for different reasons, such as: task's creation (in that case we have the first wake up), a semaphore becomes unlocked and so on.
-In all those cases different kernel function are called, but at the end the \texttt{try\_to\_wake\_up} is called. This function receives in input the
-to be waken task, that we will call $p$, it locks the runqueue where $p$ was last executed and call \texttt{select\_task\_rq\_rt}. This function decides
-which will be the cpu, and then the runqueue, where $p$ will be enqueued. In order to choose a cpu that has executed a $p$'s producer, the function loops
-for all dependencies present in the $p$'s taskaffinity list and build a mask, called \textit{affinity\_mask} with cpus that have last executed a task 
-present in $p$'s taskaffinity list. Finished the loop, the function returns the cpu with runqueue that have the lowest number of Real-Time tasks. If the 
-mask is empty, the function returns the cpu where $p$ was last executed. Note that \texttt{select\_task\_rq\_rt} is class specific, therefore implemented 
-logic don't touch fair task.
+TODO -------------- adhust here
+The logic of taskaffinity influences wake up and migration of a task. A task can wake up for different reasons, such as: task's creation (in that case 
+we have the first wake up), a semaphore becomes unlocked and so on. In all those cases different kernel function are called, but at the end the 
+\texttt{try\_to\_wake\_up} is called. This function receives in input the to be waken task, that we will call $p$, it locks the runqueue where $p$ was last 
+executed and call \texttt{select\_task\_rq\_rt}. This function decides which will be the cpu, and then the runqueue, where $p$ will be enqueued. In order 
+to choose a cpu that has executed a $p$'s producer, the function loops for all dependencies present in the $p$'s taskaffinity list and build a mask, 
+called \textit{affinity\_mask} with cpus that have last executed a task present in $p$'s taskaffinity list. Finished the loop, the function returns the cpu 
+with runqueue that have the lowest number of Real-Time tasks. If the mask is empty, the function returns the cpu where $p$ was last executed. Note that 
+\texttt{select\_task\_rq\_rt} is class specific, therefore implemented logic don't touch fair task.
+TODO ------------- until here
 
 When a task should migrate is well described in TODO cita lcs. In the current version of taskaffinity, a task that "respect" taskaffinity, that is a task 
-that was enqueued on a runqueue according to its taskaffinity relations, isn't able to migrate. In plain words, the logic that performs migration of 
+that was enqueued according to its taskaffinity relations, isn't able to migrate. In plain words, the logic that performs migration of 
 Real-time tasks was modified and it doesn't touch tasks that "respect" taskaffinity.
 
-The aim of this policy is clear: it tries to select the best cpu when a task wakes up and it block the task on a runqueue until its execution. For this
-reason the key point of taskaffinity logic is the select\_task\_rq\_rt.
+The aim of this policy is clear: when a task wakes up, the policy tries to select the best cpu for that task and, if it finds it, it blocks the task on the 
+best runqueue until the task's execution. For this reason the key point of taskaffinity logic is the \texttt{select\_task\_rq\_rt}. In the optimal case, 
+producers and consumers will be executed subsequenlty always on the same cpu. It's as if the tasks have a virtual cpuaffinity, because they will never 
+migrate.
 
-The current version of taskaffinity enforces reuse of cache memory, because producers and consumers should be executed subsequently on the same cpu. In this
-way, there are more opportunities to find shared resources in L1 cache. Moreover, it is possbile that before to execute consumer on the designated cpu, 
-another generic task "steal" the cpu at consumer and execute its work on that cpu modifing the content of L1 cache.
+Nevertheless, in paractice, the choosen cpu for $p$ is next to never the optimal cpu. The reason is very simple. The choice of the best 
+cpu, that is of the best runqueue, and enqueuing of task are performed in different moments. When \texttt{select\_task\_rq\_rt} is called, it helds a lock 
+only on last runqueue that contained the $p$. During the loop, the function has to read what is the content of different runqueues present in 
+the system, these reads are not synchronized. When cpu is selected, \texttt{select\_task\_rq\_rt} returns and \texttt{try\_to\_wake\_up} \textbf{takes 
+a lock} on choosen runqueue, in order to call \texttt{enqueue\_task} to perform the enqueuing of task. From when \texttt{select\_task\_rq\_rt} selects cpu 
+to when lock is taken, a task with equal or higher priority than $p$'s priority can be inserted in the selected runqueue, in this way, the next task that 
+will be executed won't be $p$. In figure TODO ref is represented this situation.
 
-TODO figura che fa vedere un task che si inserisce
+TODO img finestra temporale
 
-In the \texttt{select\_task\_rq\_rt}, this fact is not considered. The current version of taskaffinity ensures a weak concept of temporal locality because 
-it doesn't ensure, when it is possible, that the next task executed after a producer is a consumer. In addition, the migration policy is too strong. Pull
-and push functions mantains the system balanced, and guarantee that a Real-time task can be executed when a cpu is idle or is executing a fair task.
+The current version of taskaffinity ensures a weak concept of temporal locality because it doesn't ensure, when it is possible, that the next task executed 
+after a producer is a consumer. Another problem of the current version of taskaffinity is the migration policy. It is not quite flexible. Pull and push 
+functions mantain the system balanced, and guarantee that every cpu executes always the higher priority Real-time task present in its runqueue.
 Therefore, the deny to pull and push task that respect taskaffinity can degrade singnificantly the throughput of the application.
 
 The aim of the patch developed it to improve the concept of temporal locality and to improve the migration policy in order to use also the functions 
-involved in the migration mechanism to exploit the concept of taskaffinity. Furthermore, the patch make taskaffinity more robust adding synchronization 
-to data structures used.
+involved in the migration mechanism to exploit the concept of taskaffinity. Furthermore, the patch make taskaffinity more robust synchronizing access at 
+data structures used.
 
 %-----------------------------------------------------------------------------
 \subsection{Temporal locality}
 
 To ensure that a consumer will be the next executed task after a producer, it is necessary to change what \texttt{select\_task\_rq\_rt} "see". As I 
 previously said, during its loop, \texttt{select\_task\_rq\_rt} check for cpu that \textbf{have executed} a task in $p$'s taskaffinity list. It means
-that, in that moment, theese cpus could be executing a task that it is not a producer and then, L1 could be already dirty. For this reason, at every 
+that, in that moment, those cpus could be executing a task that it is not a producer and then, L1 could be already dirty. For this reason, at every 
 runqueue was added a field named \texttt{last\_tsk} that contains the last task executed in that runqueue. This field is updated at each context switch 
 if the next task to be executed is different from idle. In this way, if current task on runqueue is not idle, this field represents, the task in execution. 
 
+TODO figura last tsk
 
+With this additional field, \texttt{select\_task\_rq\_rt} "knows" which is the task currently executed on each runqueue. In this way, cpus that during 
+\texttt{select\_task\_rq\_rt} are executing a task that is not in $p$'s taskaffinity list are not inserted in \texttt{affinity\_mask}.
 
+This change is not enough. Consider this situation: two different cpus that we call CPU\_A and CPU\_B are executing two different istances of 
+\texttt{try\_to\_wake\_up}. Respectively, they are called for task $p$ and task $q$: the former has taskaffinity relations, the latter is a generic 
+Real-time task, both tasks have the same priority. Suppose that the current task on CPU\_A is a task in $p$'s taskaffinity list and then 
+\texttt{select\_task\_rq\_rt} choose CPU\_A for $p$. Suppose that \texttt{try\_to\_wake\_up} that wakes up $q$ choose CPU\_A and enqueue task $q$ on 
+runqueue of CPU\_A. Task $p$ is not still enqueued, therefore when it will be enqueued, it will be preceeded by $q$ and then the next task that will
+be executed on CPU\_A is $q$.
 
-[choice of cpu] The choice of cpu where to execute consumers is the key point to TODO far funzionare taskaffinity. To improve the temporal locality
+To resolve this problem, I have modified enqueuing of task in this manner: a task that "respects" taskaffinity is enqueued on the top of a runqueue and not 
+on tail. 
 
-[insertion on a run queue] Una volta che la cpu is choosen, the kernel calls enqueue\_task to insert the task on runqueue choosen. This procedure is 
-followed for each task. The idea is: if a task has taskaffinity and choosen cpu satisfies taskaffinity criteria, the task will be enqueued on the top of 
-runqueue and not on the bottom. In this way, the next task that will be executed on that runqueue will be the consumer
+TODO figura enqueue in testa
 
+In this way, if two Real-time tasks are on the same runqueue and have the same priority, but one of them "respects" taskaffinity, the next task that 
+will be executed is the task that "respects" taskaffinity. Until now we have modified the logic present in \texttt{try\_to\_wake\_up}.
+A carefully reader, will have noted that with this strategy a task with taskaffinity can move up a task without taskaffinity only if the latter is enqeued 
+\textit{before} the former.
 
+To resolve this problem, migration mechanism is used. When the \texttt{try\_to\_wake\_up} have enqueued task $p$, it checks if $p$  can be executed on the 
+selected runqueue or not. If on runqueue there is a task with priority equal or higher than the $p$'s priority and this task precede $p$, 
+\texttt{push\_rt\_task} is called and $p$ can be pushed on another cpu. To select the cpu where to push $p$, the same mechanism used in 
+\texttt{select\_task\_rq\_rt} is adopted. Therefore, $p$ will be pushed where it is in execution a task in $p$'s taskaffinity list, if it is impossible
+standard push criteria are adopted and $p$ will be pushed on a cpu that executing a task with lower priority than $p$.
+
+TODO alla fine faccio un riassunto magari lo metto in tabella
+
+In the table TODO ref are reassumed change apported to current version of taskaffinity, in order to improve temporal locality.
 
 %-----------------------------------------------------------------------------
 \subsection{Synchronization}
 
+In the current version of taskaffinity, accesses to data structures used to manage taskaffinity are made by user or by kernel. The resources that must be
+synchronized are \texttt{taskaffinity\_list} and \texttt{followme\_list} TODO del followme non sono sicuro
+
+\begin{description}
+\item[Access from user space:] User can access to taskaffinity data structures using syscalls \texttt{sched\_add\_taskaffinity}, and 
+\texttt{sched\_del\_taskaffinity}. These functions access to pid of the task received in input in synchronized way, because they using the read-write lock
+tasklist\_lock that protects the kernel internal task list. For this reason, at every moment, only one instance of these syscalls can modify taskaffinity 
+data structure of a task.
+
+TODO sezione di codice
+
+\item[Access from kernel space:] Here the situation is more complex. There are two functions that can access to taskaffinity data structures, they are:
+\texttt{task\_affinity\_notify\_exit} and \texttt{select\_task\_rq\_rt}. The former function frees taskaffinity data structures and it is called when a 
+task is exiting. During this phase, all resources used by a task, pid included, are TODO liberate therefore, when \texttt{task\_affinity\_notify\_exit} is 
+called, \textit{tasklist\_lock} is acquired. This is not enough because in that moment \texttt{select\_task\_rq\_rt} can access to taskaffinity data 
+structure of the exiting task, for this reason another layer of synchronization is needed. To resolve this problem, every task has its own read-write lock 
+named \textit{taskaff\_lock} to protect its taskaffinity data structures. 
+
+\end{description}
+
+TODO immagine accesso alle strutture dati
+
+In figure are represented the two step of sycnhronization. In step (a) syscalls try to acquire \textit{tasklist\_lock} in order to avoid to access to a 
+taskaffinity list of an exiting task. In step (b) all functions that want to access to taskaffinity data structure of a certain task, must acquire the
+\textit{taskaff\_lock} that protect those structures. A read-write lock was choosen because reads on taskaffinity data structures are most frequently than 
+writes. Reads are performed by \texttt{select\_task\_rq\_rt} while writes are executed only by the syscalls and \texttt{task\_affinity\_notify\_exit}
 
 
-
-%-----------------------------------------------------------------------------
-\subsection{Migration policy}
 
 
