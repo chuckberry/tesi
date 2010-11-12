@@ -9,24 +9,44 @@ In this chapter we present which are optimization performend and why. we see ...
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Scheduler architecture on 2.6.34}
 
-Now I will introduce which are the part of scheduling procedure interested by taskaffiniy logic and which are the most important change carried out from
-2.6.31 kernel version to 2.6.34.
+Now I will briefly introduce which are the part of scheduling procedure interested by taskaffinity logic and which are the most important changes carried 
+out from 2.6.31 kernel version to 2.6.34.
 
 %-----------------------------------------------------------------------------
-\subsection{Awakening of a task}
+\subsection{Task wake up management}
 
-The current version of taskaffinity patch, is applied to kernel version 2.6.31. Therefore it is necessary porting this patch to the current kernel version 
-2.6.34. Now I will briefly describe what is the mechanism used to schedule a Real-time task in the current kernel version. 
-TODO which are mechanisms interested by taskaff logic.
+The scheduling procedure for a task starts when it wakes up. A task can wake up
+for different reasons, i.e. a semaphore becomes unlocked, task's creation
+(in that case it has the first wake up), etc.. In all those cases different
+kernel functions are called, but at the end they call 
+\texttt{try\_to\_wake\_up} function. The API of \texttt{try\_to\_wake\_up} is:
 
-The scheduling procedure for a task starts when it wakes up. A task can wake up for different reasons, such as: a semaphore becomes unlocked, task's creation
-(in that case it has the first wake up) and so on. In all those cases different kernel function are called, but at the end they call 
-\texttt{try\_to\_wake\_up} function. It receives in input the to be waken task, that we will call $p$, it locks the runqueue where $p$ was last 
-executed and checks if p is not already waken and if it is not already on a runqueue. In the first case the function release lock and exit, in the second
-case the function check if a \textit{push} is necessary: what is \textit{push} will be clear soon. If two checks fail, the \texttt{try\_to\_wake\_up} 
-releases lock and calls \texttt{select\_task\_rq\_rt}.
+\lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single, label=lis:API\_ttwu}
+\lstinputlisting{API_ttwu.c}
 
-This function is class specific and receives in input task $p$ from \texttt{try\_to\_wake\_up}. The aim of this function is to choose on which cpu put $p$ 
+Where $p$ is the to be waken task, other input parameters are not important now.
+This function follows these steps:
+
+\begin{enumerate}
+\item Disables kernel preemption, locks the runqueue where $p$ was last executed and check 
+if $p$ is not already waken and if it is not already on a runqueue. In the first case the 
+function releases lock and exit, in the second case the function check if a
+\textit{push} is necessary, further details about these if statementes will be
+describe soon. If two checks fail, $p$'s state is changed, the lock on runqueue
+is released and \texttt{select\_task\_rq\_rt} is called. The function
+\texttt{task\_waking} at line TODO line is class-specific and regards only Fair
+tasks. 
+
+
+\lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
+\lstinputlisting{ttwu_steps.c}
+
+\item This function is a wrapper for a class-specific function
+\texttt{select\_task\_rq\_rt} 
+
+\end{enumerate}
+
+ The aim of this function is to choose on which cpu put $p$ 
 It's important to note that this function is called when all acquired locks are released. To choose the best cpu, \texttt{find\_lowest\_rq} is called.
 This function receives in input $p$, it returns a cpu that is executing a task with lower priority than $p$'s priority and if it don't find any cpu, it 
 returns the cpu that have last executed $p$. When \texttt{find\_lowest\_rq} returns, \texttt{select\_task\_rq} check if selected cpu is online, in that case
@@ -65,25 +85,40 @@ difference from 2.6.31 kernel version. The reason of this modification is not do
 Another important part of scheduling procedure is the migration policy. Migration of Real-time tasks is made in three way: 
 
 \begin{description}
-\item[Push tasks:] when a runqueue becomes overloaded, that is it has more than one Real-time waiting on it  scheduler running on that CPU may decide to push tasks to other CPUs. It may also happen when system 
-employs some kind of priority among processes: if a high priority task is woken up, it might run on the same CPU before it has slept, or be pushed to 
+\item[Push tasks:] when a runqueue becomes overloaded, that is it has more than one Real-time waiting on it  scheduler running on that CPU may decide to push tasks to other CPUs. It may also happen when system employs some kind of priority among processes: if a high priority task is woken up, it might run on the same CPU before it has slept, or be pushed to 
 another runqueue.
 
 \end{description}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Test computers}
 
+In this work, all the test machines are quad-core 
+systems and whenever. They have different cache configurations
+as detailed below and illustrated in Fig.. Since they have different
+power management solutions to scale the frequency, which could
 
-
-
-
-
-
-
+TODO descrivere brevemente come sono fatte le macchine e dire che il numasauro usa lo shield ecc.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Taskaffinity behaviour}
 
-TODO test con diverse architetture e buffer cfr trace su varie arch dire che a 4KB lo Xeon risente del kernel, magari far vedere il peso della sched lat
+%-----------------------------------------------------------------------------
+\subsection{Buffer sizes}
+
+TODO far notare differenza latenze scheduling a 4KB ec.. calcolo incidenze
+TODO magari qualcosa sui tempi 
+
+%-----------------------------------------------------------------------------
+\subsection{Migration issues}
+TODO dire che c'\'e il ping pong e dei problemi che la migration comporta per il warm up della cache, dire che i 2 banchi di cache sullo Xeon sono
+TODO un casino
+
+%-----------------------------------------------------------------------------
+\subsection{Cache misses}
+
+TODO stesse considerazioni per dar ragione alle considerazioni fatte per le migration
+TODO scrivere evento che si va a registrare, magari dicendo che perf pensa a fare tutto quel che serve 
 
 TODO i cache miss e i tempi medi di esecuzione
 
@@ -92,7 +127,10 @@ TODO dire come a 32KB la cache non conti niente
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Patch structure}
 
-The current version of taskaffinity enforces reuse of cache memory, because producers and consumers, that have a taskaffinity relation between them, are 
+TODO serve introdurre la definizione di taskaff di lcs e richiamare l\'attenzione sul bench
+
+
+The current version of taskaffinity enforces reuse of cache memory, because producers and consumers, that have a taskaffinity relations between them, are 
 executed subsequently on the same cpu. In this way, there are more opportunities to find shared resources in L1 cache. Scheduler "knows" which tasks have a 
 taskaffinity thanks to implemented syscalls: \texttt{sched\_add\_taskaffinity}, and \texttt{sched\_del\_taskaffinity} TODO cite lcs, in this way, the 
 programmer defines which tasks have taskaffinity and then it is possible to know where producer are executed and, consequenlty, where to put consumers.
