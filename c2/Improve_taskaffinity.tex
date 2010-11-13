@@ -31,64 +31,95 @@ This function follows these steps:
 \item Disables kernel preemption, locks the runqueue where $p$ was last executed and check 
 if $p$ is not already waken and if it is not already on a runqueue. In the first case the 
 function releases lock and exit, in the second case the function check if a
-\textit{push} is necessary, further details about these if statementes will be
+\textit{push} is necessary, further details about these if statements will be
 describe soon. If two checks fail, $p$'s state is changed, the lock on runqueue
-is released and \texttt{select\_task\_rq\_rt} is called. The function
-\texttt{task\_waking} at line TODO line is class-specific and regards only Fair
-tasks. 
-
+is released and \texttt{select\_task\_rq}, a wrapper for a class-specific 
+\texttt{select\_task\_rq\_rt}, is called. The function \texttt{task\_waking}
+at line TODO line is class-specific and regards only Fair tasks.
 
 \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
 \lstinputlisting{ttwu_steps.c}
 
-\item This function is a wrapper for a class-specific function
-\texttt{select\_task\_rq\_rt} 
+\item \texttt{select\_task\_rq\_rt} choose on which cpu $p$ will be executed. It
+calls \texttt{find\_lowest\_rq} that returns the best cpu where to put $p$. What
+is the best cpu for $p$ will be clear soon. When \texttt{select\_task\_rq\_rt} 
+returns, check if selected cpu is online, in that case returns, otherwise calls
+\texttt{select\_fallback} that returns an any online cpu that "respects" $p$'s 
+cpu affinity.
+
+\lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
+\lstinputlisting{select_task.c}
+
+\item acquires the lock on selected runqueue, updates some $p$'s statistics, enqueues 
+$p$ on selected runqueue, update $p$'s state in TASK\_RUNNING and call
+\texttt{check\_preempt\_rq}
+
+\lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
+\lstinputlisting{ttwu_check.c}
+
+\item checks if $p$ has priority greater than priority of the task currently
+executed on selected runqueue, in that case it calls \texttt{need\_resched}
+function in order to perform the context-switch on selected runqueue at the
+end of \texttt{try\_to\_wake\_up}.
+
+\lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
+\lstinputlisting{check_prio.c}
+
+\item call class-specific function \texttt{task_woken} to check if $p$ must be
+pushed from the selected runqueue.
+
+\lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
+\lstinputlisting{final_ttwu.c}
 
 \end{enumerate}
 
- The aim of this function is to choose on which cpu put $p$ 
-It's important to note that this function is called when all acquired locks are released. To choose the best cpu, \texttt{find\_lowest\_rq} is called.
-This function receives in input $p$, it returns a cpu that is executing a task with lower priority than $p$'s priority and if it don't find any cpu, it 
-returns the cpu that have last executed $p$. When \texttt{find\_lowest\_rq} returns, \texttt{select\_task\_rq} check if selected cpu is online, in that case
-returns, otherwise discards cpu and returns an any online cpu that "respects" $p$'s cpu affinity.
-
-After the choice of cpu, \texttt{try\_to\_wake\_up} acquires the lock on the cpu, and then on runqueue selected, updates some $p$'s statistics, enqueues 
-$p$ on selected runqueue and update $p$'s state in TASK\_RUNNING. After this step, it checks if $p$ has priority grater than priority of the task currently
-executed on selected runqueue, in that case it calls \texttt{need\_resched} function in order to perform the context-switch on selected runqueue at the
-end of \texttt{try\_to\_wake\_up}. If $p$ is not the higher priority task, \texttt{try\_to\_wake\_up} go to the last step: to check if $p$ must be migrated
-from the selected runqueue. Finished this step \texttt{try\_to\_wake\_up} returns.
-
 The most important differences from version 2.6.31 related to Real-time tasks regard principally \texttt{try\_to\_wake\_up}. 
 
-TODO figure codici e sotto codice degli stati di un task
+TODO figura comparativa codici
 
-In 2.6.31 kernel version fig. TODO ref (a), the choice carried out by \texttt{select\_task\_rq} could be useless, because multiple istances of 
-\texttt{try\_to\_wake\_up} for the same task can be executed simultaneously and there is not any mechanism to synchronize them, therefore value assigned 
-by \texttt{select\_task\_rq} at line TODO ref could change. In the 2.6.34 kernel version, a new task's state named TASK\_WAKING was introduced. With this 
-state a \texttt{try\_to\_wake\_up} indicates that the task's awakening is in progress, therefore any other istance of \texttt{try\_to\_wake\_up} can return.
+It is possible to have multiple istances of \texttt{try\_to\_wake\_up} for the same task executed simultaneously. In the 2.6.31 kernel version, this problem
+is resolved by holding runqueue lock. In the 2.6.34 kernel version, to deal with this issue a new task's state named TASK\_WAKING was introduced. This state
+is used to indicate someone is already waking the task, in this way other istances of \texttt{try\_to\_wake\_up} fails when executes the if statement at 
+line TODO ref, because input parameter $state$ is in the most cases equal to TASK\_ALL and then, according to fig TODO stati,
+\texttt{TASK\_WAKING & TASK\_ALL} return 0 and \texttt{try\_to\_wake\_up} exits. With this solution it is possible reduce time in which lock on runqueue is 
+held. 
 
-TODO codice
-
-How this mechanism works is simple. At line TODO codice lock on task's runqueue is acquired. The next statement is a check on task's state. Input parameter 
-\textit{state} is never equal to TASK\_WAKING, therefore, according to definitions showed in fig. TODO stato task, when \texttt{p->state} is equal to 
-TASK\_WAKING, the if statement is true and the function exit. But, when \texttt{p->state} becomes equal to TASK\_WAKING? Upon executing the if statement.
-
-TODO codice 
-
-After relased lock on $p$'s runqueue, \texttt{select\_task\_rq} is called and cpu is choosen, then the lock on selected runqueue is acquired.
-It is interesting to note, that in the current kernel version, kernel preemption is disabled over the whole \texttt{try\_to\_wake\_up}. This is a big 
-difference from 2.6.31 kernel version. The reason of this modification is not documented and it is not clear.
 
 %-----------------------------------------------------------------------------
 \subsection{Migration policy}
 
-Another important part of scheduling procedure is the migration policy. Migration of Real-time tasks is made in three way: 
+Another important part of scheduling procedure is the migration policy. Migration of Real-time tasks is made in two way: 
 
 \begin{description}
-\item[Push tasks:] when a runqueue becomes overloaded, that is it has more than one Real-time waiting on it  scheduler running on that CPU may decide to push tasks to other CPUs. It may also happen when system employs some kind of priority among processes: if a high priority task is woken up, it might run on the same CPU before it has slept, or be pushed to 
-another runqueue.
+\item[Push tasks:] The push operation is implemented by \texttt{push\_rt\_task()}. The function receives in input a runqueue and looks at the 
+highest-priority non-running runnable real-time task on the input runqueue and considers all the runqueues to find a CPU where it can run. It searches for 
+a runqueue that is of lower priority, that is, one where the currently running task can be preempted by the task that is being pushed. 
+
+The research and the choice of the best cpu for the task to push is executed by \texttt{find\_lowest\_rq} the same function used in 
+\texttt{select\_task\_rq\_rt}. This function builds a mask of cpus that have the lowest-priority runqueues and returns the cpu on which the task to push is 
+last executed, as it is likely to be cache-hot in that location. If this is not possible, the \texttt{sched\_domain} map is considered to find a CPU that 
+is logically closest to last cpu that has executed the task to push. If this too fails, a cpu is selected at random from the mask.
+
+The push operation is performed until a real-time task fails to be migrated or there are no more tasks to be pushed. Because the algorithm always selects 
+the highest non-running task for pushing, the assumption is that, if it cannot migrate it, then most likely the lower real-time tasks cannot be migrated 
+either and the search is aborted. No lock is taken when scanning for the lowest-priority runqueue. When the target runqueue is found, only the lock of that 
+runqueue is taken, after which a check is made to verify whether it is still a candidate to which to push the task (as the target runqueue might have been 
+modified by a parallel scheduling operation on another CPU). If not, the search is repeated for a maximum of three tries, after which it is aborted. 
+
+In order to decide which tasks must be pushed, a linked list named \textit{pushable\_list} is added to each runqueue. \texttt{push\_rt\_task()} selects task
+to push from this list. A task is inserted in this list when it is enqueued on a runqueue see fig TODO snip enqueue. 
+
+The current task of any runqueue can't never be in a pushable list, in fact, during a context switch the next task to be executed is removed from the 
+runqueue's pushable list.
+
+\item[pull task:] The pull operation is implemented by \texttt{pull\_rt\_task()}. The algorithm looks at all the overloaded runqueues in the system 
+and checks whether they have a Real-time task that can run on the target runqueue (that is, checks if the target cpu "respects" the cpuaffinity of the 
+task to pull) and if that Real-time task is of a priority higher than the task the target runqueue is about to schedule. If so, the task is queued on 
+the target runqueue. This search aborts only after scanning all the overloaded runqueues in the system. 
 
 \end{description}
+
+In the 2.6.34 kernel version, the migration logic and all data structures involved are not changed from 2.6.31 version.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Test computers}
@@ -128,7 +159,6 @@ TODO dire come a 32KB la cache non conti niente
 \section{Patch structure}
 
 TODO serve introdurre la definizione di taskaff di lcs e richiamare l\'attenzione sul bench
-
 
 The current version of taskaffinity enforces reuse of cache memory, because producers and consumers, that have a taskaffinity relations between them, are 
 executed subsequently on the same cpu. In this way, there are more opportunities to find shared resources in L1 cache. Scheduler "knows" which tasks have a 
