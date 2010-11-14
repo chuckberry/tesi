@@ -5,7 +5,7 @@ system performance. The last section of the chapter propose an overview of the m
 is given a briefly description, some example that explain how to implement it and advatages and drawbacks of the policy.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Problems due to un incorrect use of cache}
+\section{Problems due to an incorrect use of cache}
 \label{sec:s1}
 
 In most multicore platforms, different cores share onchip caches, usually is L2 or L3 cache. Recent research works show how an unfair cache sharing
@@ -13,11 +13,10 @@ among concurrent tasks and cache trashing degrades performance. Modern operating
 fair and low-overhead manner.
 Most simply, they balance the load across processor by migrating task to keep the run queues approximately equal. An OS assumes that,
 in a given timeslice, resource sharing uniformly impacts the rates of progress of all the co-scheduled threads.
-Unfortunately this assumption is often unmet because a thread's ability to compete for cache space is determined by its temporal reuse behavior,
-which is often very different compared to that of other threads which are co-scheduled with it.
+Unfortunately this assumption is often unmet because how much cache space a thread may use is determined by threads with which it is co-scheduled.
 
-An interesting work developed by S. Kim et al. shows the impact of an unfair cache sharing on performance and how this phenomena is dependent by
-co-scheduled threads. In Figure \ref{fig:gzip_miss} is represented one of results provided by that work.
+An interesting activity developed by S. Kim et al. shows the impact of an unfair cache sharing on performance and how this phenomena is dependent by
+co-scheduled threads. In Figure \ref{fig:gzip_miss} we can see one of results is provided by that work.
 
 \begin{figure}[htbp]
 \centering
@@ -33,7 +32,7 @@ by 3x when it runs with apsi and by 9.5x when it runs with art, 7.3x when it run
 Consequently, the IPC is affected differently. It is reduced by 35$\%$ when gzip runs with apsi, but reduced by 63$\%$ when gzip runs with art. 
 Although not shown in the figure, art, apsi, applu, and swim's cache miss per instruction increases less than 15$\%$ when each of them runs with gzip. 
 
-In terms of fairness, gzip's significant slow down can easily result in \textbf{priority inversion}. 
+In terms of fairness, gzip's significant slow down can easily result in \textbf{priority reduction}. 
 For example, if gzip has a higher priority than art, for gzip to achieve a higher progress rate, it has to be assigned more than three times the 
 number of time slices compared to that assigned to art. Otherwise, to the end users, gzip may appear to be starved. In terms of throughput,
 gzip's significant slow down reduces the overall throughput because the utilization of the processor where gzip runs on is also significantly reduced. 
@@ -41,28 +40,29 @@ Furthermore, it is possible that the co-scheduled threads's working sets severel
 
 In briefly, there are at least three problems that may happen and render the OS schedule ineffective.
 The first problem is \textit{thread starvation}, which happens when one thread fails in competing for sufficient cache space necessary to make 
-satisfactory forward progress. The second problem is \textit{priority inversion}, where a higher priority thread achieves a slower forward
-progress than a lower priority thread, despite the attempt by the OS to provide more timeslices to the higher priority thread.
-This happens when the higher priority thread loses to the lower priority thread (or other threads) in competing for cache space. 
+satisfactory forward progress. The second problem is \textit{priority reduction}, where a higher priority thread achieves a slower forward
+progress than a lower priority thread, despite the attempt by the OS to provide more timeslices to the higher priority thread. It's as if the higher 
+priority task and lower priority task have the same priority, that is the priority of higher priority task is reduced.
+This happens when the higher priority thread loses to the lower priority thread (or other threads) in dealing for cache space. 
 To make things worse, the operating system is not aware of this problem, and hence cannot correct this situation (by assigning more timeslices to the 
 higher priority thread). The third problem is that the forward progress rate of a thread is \textit{highly dependent} on the thread mix in a co-schedule. 
 This makes the forward progress rate difficult to characterize or predict, making the system behavior unpredictable. Unfortunately, despite these problems, 
 cache implementations today are thread-blind, producing unfair cache sharing in many cases.
 
-As I said in the first chapter, in theese years were developed some ideas about how to make a scheduler cache-aware.
-This chapter aims to show the general structure and strategies used to model cache behaviour followed by theese algortihms, that are the most interesting 
-part of theese type of heuristics.
+As I said in the first chapter, in these years were developed some ideas about how to make a scheduler cache-aware.
+This chapter aims to show the general structure and strategies used to model cache behaviour followed by these algortihms, that are the most interesting 
+part of these type of heuristics.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Survey on cache architecture}
 \label{sec:s1}
 
 Over the years, cache architectures have always played an important role in system performance. Hundreds of research papers show how performance
-can be improved using multi-level caches on a single-processor machine. Multicore systems introduce new challanges for cache designer, because cache memory 
+can be improved using multi-level caches on a single-processor machine. Multicore systems introduce new challenges for cache designer, because cache memory 
 is a shared resource, therefore issues related to how a core access to cached data and how the coherence regarding the access from different processors 
-to the same cached data is guaranted are unavoidable. Furthermore, caches play an important role in managment of comunication betwen different core.
+to the same cached data is guaranteed are unavoidable. Furthermore, caches play an important role in management of communication between different core.
 This section aims to show which are most important factors introduced in cache architecture to take in consideration during the development of cache aware
-alogrithms from scratch. Theese cache characteristics are common in both general purpose and embedded systems.
+algorithms from scratch. These cache characteristics are common in both general purpose and embedded systems.
 
 %-----------------------------------------------------------------------------
 \subsection{Cache coherent protocols}
@@ -71,7 +71,7 @@ Usually in multicore architecture, there is a private L1 cache for each core, an
 that belong to the same node (NUMA). Shared cache is one of the most critical resources in multicores.
 
 As for all types of shared resources, also for shared cache it's necessary to ensure integrity of the shared data.
-Before to analyze mechanisms used to ensure data integrity, it is necessary pay attention to the difference between two terms: consistence and coherence.
+Before to analyze mechanisms used to ensure data integrity, it is necessary to pay attention to the difference between two terms: consistence and coherence.
 When two or more CPUs operate on a shared variable and one of these CPUs modify the variable, it is necessary that the information regarding
 this change of value be communicated to the other CPUs. Consistence refers to 'when' this change in memory data is available to other CPU cores.
 Coherence refers to 'how' the change is communicated between the processors. Therefore, to ensure correctness of cache operations, it is necessary define
@@ -247,17 +247,17 @@ Recently AMD has announced that it will employs a non-strided prefetcher in its 
 implementations.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Classification of cache-aware Scheduling algortihms}
+\section{Classification of cache-aware Scheduling algorithms}
 
 Cache aware scheduling policies can be classified according to type of strategy followed. They are divided in \textit{data locality} and 
-\textit{temporal locality} policies. The former type is focused on a smart allocation of resources in cache. Theese policies partition cache memory in order
+\textit{temporal locality} policies. The former type is focused on a smart allocation of resources in cache. These policies partition cache memory in order
 to every task may use a dedicated area in cache memory and then, reduce inter-thread cache interference and miss rate.
-The latter type is focused on cache reusability. Theese policies schedule tasks that subsequently will access at the same data, reducing miss rate.
+The latter type is focused on cache reusability. These policies schedule tasks that subsequently will access at the same data, reducing miss rate.
 
 %-----------------------------------------------------------------------------
 \subsection{data locality policies} 
 
-Theese policies are focused on the use of Last Level shared Cache (LLC) made by scheduled tasks. They can be used both for Real-time and Fair tasks. 
+These policies are focused on the use of Last Level shared Cache (LLC) made by scheduled tasks. They can be used both for Real-time and Fair tasks. 
 They don't take care about core-local cache (usually L1) or other shared resources like interconnects. In literature, data locality is the most developed 
 type of cache aware policies, because they can be integrated in every OS and are relatively simple policies to develop. Now I will show two examples of 
 data locality policies and how they are implemented.
@@ -267,7 +267,7 @@ data locality policies and how they are implemented.
 with an on-chip LLC, and a task set $\tau$, in which each task $T$ releases a job $J_i$ every period $p(T)$. Every released job is characterized by a 
 worst-case execution time (WCET) denoted by $e(T)$. It means that each job released by task $T$ has a maximum duration of $e(T)$. For each job is defined 
 the number $A(J_k)$ that represents the total cache space size used by it: we define this space as per-job \textit{working set sizes} (WSS). 
-For simiplicity we assume that each job generated by a task $T$ use the same number of partition, therefore it is possbile to express $A(J_k)$ as $A(T)$. 
+For simiplicity we assume that each job generated by a task $T$ use the same number of partition, therefore it is possible to express $A(J_k)$ as $A(T)$. 
 The quantity $e(T)/p(T)$ is called the utilization of $T$, denoted $u(T)$. The deadline $d(J_k)$ of a job $J_k$ coincides with the release time of job 
 $J_{k+1}$. If job $J_k$ completes its execution after time $d(J_k)$, then it is \textbf{tardy}. For some scheduling algorithms, tardiness may be bounded 
 by some amount $B$, meaning that any job $J_k$ will complete execution no later than time $d(J_k)+B$. Finally, assume that tasks have fixed priority.
