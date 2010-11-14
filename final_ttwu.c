@@ -1,3 +1,4 @@
+2496         p->state = TASK_RUNNING;
 2497 #ifdef CONFIG_SMP
 2498         if (p->sched_class->task_woken)
 2499                 p->sched_class->task_woken(rq, p);

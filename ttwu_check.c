@@ -9,12 +9,10 @@
 2450                 schedstat_inc(rq, ttwu_local);
 		....
 2460 #endif /* CONFIG_SCHEDSTATS */
-2473         activate_task(rq, p, 1);
+2473         activate_task(rq, p, 1); /* enqueue task */
 2474         success = 1;
 		.... 
 2491 
 2492 out_running:
 2493         trace_sched_wakeup(rq, p, success);
 2494         check_preempt_curr(rq, p, wake_flags);
-2495 
-2496         p->state = TASK_RUNNING;

@@ -1,4 +1,4 @@
-2391         this_cpu = get_cpu();
+2391         this_cpu = get_cpu(); /* disable kernel preemption */
 2392 
 2393         smp_wmb();
 2394         rq = task_rq_lock(p, &flags);
