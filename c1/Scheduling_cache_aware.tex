@@ -71,26 +71,23 @@ Usually in multicore architecture, there is a private L1 cache for each core, an
 that belong to the same node (NUMA). Shared cache is one of the most critical resources in multicores.
 
 As for all types of shared resources, also for shared cache it's necessary to ensure integrity of the shared data.
-Before to analyze mechanisms used to ensure data integrity, it is necessary to pay attention to the difference between two terms: consistence and coherence.
 When two or more CPUs operate on a shared variable and one of these CPUs modify the variable, it is necessary that the information regarding
-this change of value be communicated to the other CPUs. Consistence refers to 'when' this change in memory data is available to other CPU cores.
-Coherence refers to 'how' the change is communicated between the processors. Therefore, to ensure correctness of cache operations, it is necessary define
-when a modified value must be made visible to another processor's read instruction, this is the consistency model, and define the rules used to comunicate 
-memory update between different cores, this is coherence protocol. In briefly a cache coherence protocol is the mean used to maintains consistency between
-all the cache in the system. Existing coherence protocols are classified based on the mechanism by which they ensure cache coherence: 
+this change of value be communicated to the other CPUs. The mean used to communicate these informations is called \textit{coherence protocol}, it defines 
+the rules used to comunicate memory update between different cores. Existing coherence protocols are classified based on the mechanism by which they ensure 
+cache coherence: 
 
 \begin{itemize}
 
 \item Snooping based protocols: Each cache monitors address lines of shared bus for every memory transaction made by remote processors. Appropriate action
 is undertaken when data locally cached is modified by this transaction, for example: a write by a remote processor into a data address locally cached 
-results in an invalidation of the local cache copy .
+results in an invalidation of the local cache copy.
 
 \item Snarfing based protocols: A cache controller watches both address and data in an attempt to update its own copy of a memory location when a second 
 master modifies a location in main memory. When a write operation is observed to a location that a cache has a copy of, the cache controller updates its 
 own copy of the snarfed memory location with the new data.
 
-\item Directory-based protocols: Shared data are placed in a common directory that maintains the coherence between caches processor caches. 
-This directory acts as a look-up table for every processor to verify coherence and consistency of data that is currently being read or updated.
+\item Directory-based protocols: Shared data are placed in a common directory that maintains the coherence between processor caches. 
+This directory acts as a look-up table for every processor to verify coherence of data that is currently being read or updated.
 
 \end{itemize}
 
@@ -111,13 +108,13 @@ caches in the system) at main memory location that correspond to modified cache 
 state of cache line to shared state.
  
 \item Exclusive
-The cache line is present only in the current cache, and it matches main memory. It is possible read/write lines in this state. A cache that own
-line in exclusive state must snoop all read transaction from all other cache and if it intercepts some read that regard owned cache line, it changes
-state of that line from exclusive to shared.
+The cache line is present only in the current cache, and it matches main memory. It is possible to read/write lines in this state. A cache that owns
+lines in exclusive state must snoop only all read transactions from all other cache and if it intercepts some read that regards owned cache line, it changes
+the state of that line from exclusive to shared.
 
 \item Shared
-Indicates that this cache line may be stored in other caches and it matches the main memory. It is possible read cache line in this state. Writes to a shared
-cache line are allowed but before to perform the operation, it is necessary invalidate all other copies in other caches.
+Indicates that this cache line may be stored in other caches and it matches the main memory. It is possible read cache line in this state. Writes to a 
+shared cache line are allowed but before to perform the operation, it is necessary invalidate all other copies in other caches.
 A cache that holds a line in the Shared state must listen for invalidation from other caches, and discard the line (by moving it into Invalid state) on a 
 match.
 
@@ -129,9 +126,9 @@ Indicates that this cache line is invalid, read/write operation on invalid cache
 Cache coherence protocols play an important role to improve efficiency of the read/write in cache. There are a lot of variant of MESI protocol, the most 
 recent variants are MESIF and MOESI.
 
-The former protocol adds Forward state. It is only relevant for the L3 cache. This state indicates that only one cache should act as a designated responder 
-for any requests for the given line. With the standard MESI protocol, a request for cache line will receive a response from each cache that contains that 
-line in the shared state. Instead, with MESIF protocol a request will be responded to only by the cache holding the line in the Forward state.
+The former protocol adds the Forward state. It is only relevant for the L3 cache. This state indicates that only one cache should act as a designated 
+responder for any requests for the given line. With the standard MESI protocol, a request for cache line will receive a response from each cache that 
+contains that line in the shared state. Instead, with MESIF protocol a request will be responded to only by the cache holding the line in the Forward state.
 A cache line shared among multiple processors will be in forward state in only one L3 cache. This protocol is used in new Intel microarchitecture Nehalem 
 and it is designed for ccNUMA. The aim of this new state is to reduce communications between cache.
 
@@ -150,9 +147,9 @@ Another important architecture detail that affect performance is if a cache is i
 An inclusive cache means that all data available in higher level cache are contained also in the last level cache, namely in shared cache.
 An exclusive cache means that data is present only in one cache.
 
-It is clear that theese two architectural policy are focused on two different aspects. The first policy greatly reduces snoop traffic because if a core 
+It is clear that these two architectural policy are focused on two different aspects. The first policy greatly reduces snoop traffic because if a core 
 doesn't find requested data in any of its cache level, it knows the data it is also not present in any other core's cache. The second policy, instead, 
-allows to store more data than an inclusice cache, because for each data only one copy is stored.
+allows to store more data than an inclusive cache, because for each data only one copy is stored.
 
 An example of inclusive L3 shared cache is implemented in Intel Nehalem microarchitecture. In this implementation to insure coherency across 
 all caches, the L3 cache line has additional flags that keep track of which core the data came from and a core valid bit that indicate that cache line 
