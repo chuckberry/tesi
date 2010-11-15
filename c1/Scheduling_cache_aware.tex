@@ -144,10 +144,10 @@ bandwidth between two CPUs is significantly better than to main memory. An examp
 \subsection{Inclusive and exclusive cache}
 
 Another important architecture detail that affect performance is if a cache is inclusive or exclusive.
-An inclusive cache means that all data available in higher level cache are contained also in the last level cache, namely in shared cache.
+An inclusive cache means that all data available in higher level caches are contained also in the last level cache, namely in shared cache.
 An exclusive cache means that data is present only in one cache.
 
-It is clear that these two architectural policy are focused on two different aspects. The first policy greatly reduces snoop traffic because if a core 
+It is clear that these two architectural policies are focused on two different aspects. The first policy greatly reduces snoop traffic because if a core 
 doesn't find requested data in any of its cache level, it knows the data it is also not present in any other core's cache. The second policy, instead, 
 allows to store more data than an inclusive cache, because for each data only one copy is stored.
 
@@ -172,10 +172,10 @@ preferred over an exclusive cache, because it simplifies the problem of cache co
 \label{fig:neh_amd}
 \end{figure}
 
-To get a sense of how cache coherence and an inclusive or exclusive of cache impact on system performance, it is possible to look over the work made by 
+To get a sense of how cache coherence impacts on system performance, it is possible to look over the work made by 
 Molka et al. \cite{molka}. They have compared perfomance of MESIF protocol applied to inclusive cache (Intel Xeon 55** Nehalem) and MOESI protocol applied 
-to an exclusive cache (AMD Shanghai), see figure \ref{fig:neh_amd}. Theese processors tested are multithreaded and ccNUMA dual-socket SMP systems. 
-In the table \ref{fig:tab_lat} are showed read latencies recorded during test.
+to an exclusive cache (AMD Shanghai), see figure \ref{fig:neh_amd}. These processors tested are multithreaded and ccNUMA dual-socket SMP systems. 
+In the table \ref{fig:tab_lat} read latencies recorded during test are showed.
 
 \begin{figure}[htbp]
 \centering
@@ -186,8 +186,8 @@ In the table \ref{fig:tab_lat} are showed read latencies recorded during test.
 
 \begin{description} % off - on chip
 
-\item[on-chip latencies] Theese data measure access time to the cache of other cores on the same die. We will see that to have an inclusive cache or not
-influence strongly this type of latencies. 
+\item[on-chip latencies] These data measure access time to the cache of other cores on the same die. We will see that having an inclusive cache or not
+influence strongly this type of latency. 
 
 \textbf{Nehalem:} A \textit{Shared} cache line in L3 is guaranted to be valid and it could be in shared or forward state, it can be accessed within 13 ns. 
 An \textit{Exclusive} cache line that has core valid bit set in L3, may has been modified in higher level cache, this fact forces the L3 cache to check the 
@@ -219,13 +219,12 @@ It is intersting to note how  accesses to remote caches on Shanghai are slower t
 \subsection{Cache Hardware prefetcher}
 
 Finally, it is necessary to spend a few words about prefetching. Prefetcher is an hardware component that tries to predict which memory addresses are
-going to be used by the program, in order to load needed data in cache memory just in time.
+going to be used by the program, in order to load needed data in cache memory.
 Typical technical workloads often access memory in regular and sequential patterns, therefore, with a smart prediction mechanism, a prefetcher can select 
-and load right data and, in this way, reduce memory latency. The key point to build a good prefetcher is to design prediction mechanism.
+and preload correct data and, in this way, reduce memory latency. The key point to build a good prefetcher is to design prediction mechanism.
 In literature there are many ideas to solve this problem. An example of concrete solution is the Intel Smart Memory access. This system was introduced
 with Intel Core microarchitecture. In this system there are two prefetchers to the Level 1 data cache and the traditional prefetcher to the Level 1 
-instruction cache. In addition there are two prefetchers associated with the Level 2 cache and shared between the cores. In total, there are eight
-prefetchers per dual-core processor. 
+instruction cache. In addition there are two prefetchers associated with the Level 2 cache. In total, there are eight prefetchers per dual-core processor. 
 In order to improve the accuracy of the prediction, the prefetcher system tags the history of each load using the Instruction Pointer (IP) of the load. 
 For each load, the prefetcher builds a history and keeps it in a suitable history array. Based on load history, the prefetcher tries to predict the 
 address of next load accordingly to a constant stride calculation (a fixed distance or "stride" between subsequent accesses to the same memory area). 
@@ -237,7 +236,7 @@ data prefetched.
 
 Another category of prefetcher are \textit{non-strided} data prefetcher. They are very useful for accessing complex and irregular data structures as 
 linked list, B-Trees etc. There are different techniques to implement theese prefetcher, one of theese is "pattern history based prefetcher". 
-In this approach, the prefetcher tracks the addresses of misses and tries to identify specific patterns of misses that occur together (temporally). 
+In this approach, the prefetcher tracks the addresses of misses and tries to identify specific patterns of misses that occur together. 
 Once a pattern of misses has been detected, the prefetcher will find the first miss in the pattern. When this first miss occurs again, the prefetcher 
 will immediately prefetch the rest of the pattern. For traversing a complex data structure like a linked list, this would be a fairly effective approach.
 Recently AMD has announced that it will employs a non-strided prefetcher in its brand new Bulldozer microarchitecture, but it has not revealed details on 
@@ -252,7 +251,7 @@ to every task may use a dedicated area in cache memory and then, reduce inter-th
 The latter type is focused on cache reusability. These policies schedule tasks that subsequently will access at the same data, reducing miss rate.
 
 %-----------------------------------------------------------------------------
-\subsection{data locality policies} 
+\subsection{Data locality policies} 
 
 These policies are focused on the use of Last Level shared Cache (LLC) made by scheduled tasks. They can be used both for Real-time and Fair tasks. 
 They don't take care about core-local cache (usually L1) or other shared resources like interconnects. In literature, data locality is the most developed 
@@ -262,13 +261,13 @@ data locality policies and how they are implemented.
 \begin{description}
 \item[Cache aware Fixed priority policy:] To understand this type of policy assume this situation: consider a multicore platform consisting of $M$ cores 
 with an on-chip LLC, and a task set $\tau$, in which each task $T$ releases a job $J_i$ every period $p(T)$. Every released job is characterized by a 
-worst-case execution time (WCET) denoted by $e(T)$. It means that each job released by task $T$ has a maximum duration of $e(T)$. For each job is defined 
+worst-case execution time (WCET) denoted by $C(T)$. It means that each job released by task $T$ has a maximum duration of $C(T)$. For each job is defined 
 the number $A(J_k)$ that represents the total cache space size used by it: we define this space as per-job \textit{working set sizes} (WSS). 
 For simiplicity we assume that each job generated by a task $T$ use the same number of partition, therefore it is possible to express $A(J_k)$ as $A(T)$. 
 The quantity $e(T)/p(T)$ is called the utilization of $T$, denoted $u(T)$. The deadline $d(J_k)$ of a job $J_k$ coincides with the release time of job 
 $J_{k+1}$. If job $J_k$ completes its execution after time $d(J_k)$, then it is \textbf{tardy}. For some scheduling algorithms, tardiness may be bounded 
 by some amount $B$, meaning that any job $J_k$ will complete execution no later than time $d(J_k)+B$. Finally, assume that tasks have fixed priority.
-This model describe very well a typical Real-time application.
+This model describes very well a typical Real-time application.
 
 A job $J_k$ is scheduled for execution if:
 
@@ -302,33 +301,34 @@ A job $J_k$ is scheduled for execution if:
 \end{figure}
 
 Figure \ref{fig:sched_example} shows how the task set in Table \ref{tab:cache_task_set} is scheduled by the policy. The index of each task 
-indentify the task and indicate the priority of the latter. Higher priority is 1 and lower priority is 4. In the picture jobs are represented in this way: 
-$J_{\alpha}^\beta$, where $\alpha$ represents which task has released the job, and then also its priority, and $\beta$ is an index that identify the job.
-We assume that co-scheduled jobs use not-overlapped cache partitions.
+indentifies the task and indicates the priority of the latter. Higher priority is 1 and lower priority is 4. In the picture jobs are represented in this 
+way: $J_{\alpha}^\beta$, where $\alpha$ represents which task has released the job, and then also its priority, and $\beta$ is an index that identifies 
+the job. We assume that co-scheduled jobs use not-overlapped cache partitions.
 
 At time 0 all jobs are released. At this time, the job $J_{4}^1$ can not be executed because it has lower priority than $J_{3}^1$ and the latter can not be
 scheduled since there is not enough idle cache partitions available.
 
 It is clear that the aim of the described policy is to avoid cache trashing that occurs when the amount of space required by co-scheduled jobs is greater 
 than the dimension of LLC. A very important assumption made in this policy to achieve this goal is that all jobs use not-overlapped 
-partition of cache. This fact simplifies the scheduling problem, because it's enough make a check on amount of cache space occupied by co-scheduled jobs to 
-infer if cache thrasing occurs. Moreover, in practice cases, it is not always true, because it greatly depends on type of application executed.
+partition of cache. This fact simplifies the scheduling problem, because it's enough to make a check on the amount of cache space occupied by co-scheduled 
+jobs to infer if cache thrasing occurs. Nevertheless, in practicei, this is not always true, because it greatly depends on type of application executed.
 
 
-\textit{\textbf{Mechanisms and examples}} They key mechanism to reach this goal is profiler that we will call \textit{co-scheduler}. At runtime, the 
-co-scheduler tries to infer what is the WSS of each scheduled task and provide theese informations to scheduler. The challenge is how to do this job. 
-Calandrino et. al \cite{calandro} propose an interesting implementation of co-scheduler and of this type of policy.
+\textit{\textbf{Mechanisms and examples}} They key mechanism to reach this objective is profiler. At runtime, the profiler tries to infer what is the WSS 
+of each scheduled task and provide these informations to scheduler. The challenge is how to do this job. 
+Calandrino et. al \cite{calandro} propose an interesting implementation of co-scheduler and for this type of policy.
 
 The implementation is focused on Soft Real-time tasks, its solution is quite simple: it makes EDF cache-aware. Standard EDF algorithm gives higher priority 
 to the task with earlier deadline in order to schedule it as soon as possibile. A cache-aware EDF is very similar to classic EDF: it "promotes", that is 
-increase priority, of the job with the smallest WSS, in this way jobs on a runqueue are ordered by WSS.
+increases priority, of the job with the smallest WSS, in this way jobs on a runqueue are ordered by WSS.
 
 The algortihm uses two separate run queues for eligible jobs: the former is EDF-ordered, the latter is a "promotion" queue. In this queue, jobs are ordered
 from smallest to largest WSS. The job in front of this queue is "promoted", that is its priority was increased and, for this reason, it remains at the front
-of the queue and it will be the next task to execute. But if there are tardy jobs, the algorithm schedules the job at the head of the EDF-ordered queue.
+of the queue and it will be the next task to execute. If there are tardy jobs, they are inserted in EDF-ordered queue and they are scheduled according to 
+EDF policy. The EDF-ordered queue contains task that have higher priority than tasks inserted in "promotion queue" TODO dai nomi a queste code.
 When the heuristic picks a task from promotion queue, it checks if it will cause cache thrashing. For this reason, the scheduler mantains a variable with 
 the total amount of the WSSs allocated, that is the cache space allocated. If this value plus the WSS of the job to schedule exceeds the cache space size, 
-thrashing will occurs. In this case, the core remains idle and the job waits for some job that frees cache resources.
+thrashing will occur. In this case, the core remains idle and the job waits for some job that free cache resources.
 Obiouvsly task priorities are respected, it means that a task with the smallest WSS is promoted only if it has the higer priority.
 
 \begin{figure}[htbp]
@@ -339,21 +339,46 @@ Obiouvsly task priorities are respected, it means that a task with the smallest 
 \end{figure}
 
 To compute the WSS used by each task, the co-scheduler divides the total cache misses observed over all profiled jobs by the total number of profiled jobs, 
-and multiplying the result by the cache line size. All the profiled jobs belong to the same task. The co-scheduler discards measures obtained by jobs that 
-cause cache thrashing. Cache misses are recorded using performance counters. At the beginning of an application, there is not any measure about cache miss, 
-therefore the co-scheduler requires a bootstrapping phase in order to get necessary measures. This phase converge pretty fast to a reasonable result.
+and multiplying the result by the cache line size. Cache misses and WSS are related, because, from experiments executed by Calandrino et al, follows that
+number of cache misses multiplied for dimension of a cache line gives a number proportional to WSS used by a job. All the profiled jobs belong to the same 
+task. The co-scheduler discards measures obtained by jobs that cause cache thrashing. Cache misses are recorded using performance counters. 
+At the beginning of an application, there is not any measure about cache miss, therefore the profiler requires a bootstrapping phase in order to get 
+necessary measures. This phase converge pretty fast to a reasonable result.
 
 It is interesting to note, that in this implementation the only mean to avoid cache trashing is a check on amount of WSSs used by scheduled tasks.
 This is a sub-optimal solution because cache trashing can occurs also in those cases where the total amount of WSSs is less than total amount of cache
-space. The reason is simple: the WSSs of two jobs could be overlapped, furthermore, also under hypotesis of non-overlapped WSSs, check on WSS is sufficient
+space. To understand why, it is necessary to remind some consideration about cache architectures. When a cache miss occurs, it is necessary to make room 
+in cache for the new entry to load. The heuristic that decide which is the entry to evict is called the replacement policy. According to replacement policy,
+cache memory are classified in:
+
+TODO img da mettere
+\begin{description}
+\item direct-mapped: a line in main memory can be placed only in one cache line. There is an 1:1 relationship between main memory and cache memory.
+\item fully associative: a line in main memory can be placed in any cache line. There is a 1:N relationship between main memory and cache memory.
+\item N-way set associative: it is a trade-off between direct-mapped and fully associative. Cache memory is divided in set, each set can contain N cache 
+line. A line in main memory can be present only in one specific set and within it, that line can be placed in any line that belong to that set.
+\end{description}
+
+The reason is simple: the WSSs of two jobs could be overlapped. It is very difficult in practice having not-overlapping WSS. Furthermore, also 
+assuming true this hypotesis, 
+
+TODO mettere le arch della cache
+
+, furthermore, also under hypotesis of non-overlapped WSSs, check on WSS is sufficient
 to prevent cache thrashing only if the cache is fully associative, because every line in main memory can be mapped on any cache line but, in a N-way 
 set associative cache, a line in main memory can be mapped only within a certain set. For this reason, if a task occupies cache line used by a co-scheduled 
-task, cache trashing will occcurs. Calandrino et al. test their algorithm with Soft Real-Time multimedia application and, according to results showed 
+
+
+Considering this architecture detail, it is clear that check on WSS is sufficient to prevent cache thrashing only if the cache is fully associative, because every line in main memory can be mapped on any cache line but, in a N-way set associative cache, a line in main memory can be mapped only within a certain 
+set. For this reason, if a task occupies cache line used by a co-scheduled task, cache trashing will occcurs. Furthermore, there is another important 
+detail: we have assumed that non-overlapping WSS, but, in practice, this hypotesis is unlikely, therefore cache thrashing can occur also with a fully associative cache. Nervetheless, Calandrino et al. test their algorithm with Soft Real-Time multimedia application and, according to results showed 
 \cite{calandro}, it seems that this sub-optimal solution is quite effective, at least with this kind of applications.
 
 \textbf{\textit{Advantages and drawbacks}} This policy presents a clear drawback: it may waste resources. According to rules previously showed, if there 
-is an idle core, but not enough cache space, a task may not be scheduled and, in this way, degrade throughput. Moreover, the policy improves predictability 
-of the application, and this aspect make this policy very indicate for Real-time system, where predictability is a very important aspect.
+is an idle core, but not enough cache space, a task may not be scheduled and, in this way, degrade throughput. 
+
+Nevertheless, the policy improves predictability of the application, because, theoretically, each job should find in cache enough space for its resources, 
+mantaining constant its execution time. This aspect make this policy very indicate for Real-time system, where predictability is a very important aspect.
 
 There is another important advantage related to improvement of predictability. On single-core systems there are well-developed techniques for timing 
 analysis of embedded software. Using these techniques, the WCET of real-time tasks may be estimated, and then used for schedulability analysis. 
@@ -366,7 +391,7 @@ analysis techniques. For details on WCET analysis for Real-time system in multic
 \item[Fair cache sharing policy:]
 
 This policy is focused on Fair tasks, therefore it considers an application model with less constraints than to that considered by
-Calandrino et al. This implementation ensures \textit{fair cache sharing}, that is a more strength strategy than to only avoid cache trashing.
+Calandrino et al. This implementation ensures \textit{fair cache sharing}, that is a strategy throughput oriented.
 
 As we have previously seen, a bad combination of coscheduled tasks may cause cache thrashing and, consequently, a variation on task's instruction per cycle
 (IPC) that determines task's performance variation. But, if co-scheduled tasks sharing cache in a fair way, they can allocate needed resources in cache and
@@ -434,23 +459,23 @@ this algorithm couldn't be suitable for Real-Time systems, where predictability 
 \end{description}
 
 %-----------------------------------------------------------------------------
-\subsection{temporal locality policies} 
+\subsection{Temporal locality policies} 
 
-The idea behind this type of policies is very simple, but in practice it is more complex than the idea behind data locality policies. Theese policies 
-require complex infrastructure and nowadays only few research works has developed polcies of this type. An interesting implementation of this type of policy
-can be found in COOL project \cite{COOL}. Recently Yang et al. \cite{taiwan} has implemented a scheduling algorithm inspired to theese policies and 
-naturally the concept of taskaffinity is a simplify implementation of temporal locality policies.
+The idea behind this type of policies is very simple, but in practice it is more complex than the idea behind data locality policies. These policies 
+require complex infrastructure and nowadays only few research activities have developed policies of this type. An interesting implementation of this type 
+of policy can be found in COOL project \cite{COOL}. Recently Yang et al. \cite{taiwan} have implemented a scheduling algorithm inspired to these policies 
+and naturally the concept of taskaffinity is a simplified implementation of temporal locality policies.
 
 \begin{description}
 \item[cache reusability policy]
-The key point to maximize reusability of data in private cache is data sharing among tasks. If two threads, or in general two task, sharing common data, 
-they are scheduled subsequently on the same cpu, in this way, it's more likely to reuse the same data in private cache.
-According this observation, tasks are partitioned in groups called \textit{sharing groups}. Tasks that share the same resources are put in the 
-same sharing group. After partitioning, the scheduler assigns the same cpu at all tasks that are in the same sharing group, in this way they will use 
-always the same private cache. 
+The key point to maximize reusability of data in private cache, that is in L1 cache, is data sharing among tasks. If two threads, or in general two task, 
+sharing common data, they are scheduled subsequently on the same cpu, in this way, it's more likely to reuse the same data in private cache.
+According this observation, tasks are inserted in abstract list called \textit{sharing groups}. Tasks that share the same resources are put in the 
+same sharing group. The scheduler assigns the same cpu at all tasks that are in the same sharing group, in this way they will use always the same private 
+cache. 
 
-Instead, to maximize reusability of data in shared cache it is necessary to improve the opportunities that the subsequently scheduled tasks could reuse the 
-data accessed by the current tasks at the scheduling point.
+Instead, to maximize reusability of data in shared cache, that is L2 or L3 cache, it is necessary to improve the opportunities that the subsequently 
+scheduled tasks could reuse the data accessed by the current tasks at the scheduling point.
 
 \begin{figure}[htbp]
 \centering
@@ -459,18 +484,19 @@ data accessed by the current tasks at the scheduling point.
 \label{fig:cosched_permutation}
 \end{figure}
 
-In figure \ref{fig:cosched_permutation} are represented possible permutations of co-scheduled tasks that can reuse content in shared cache. 
-Each square represents the data set used by a scheduled task, squares with different colours represent different data set. In the case (a), four tasks are 
-co-scheduled and they access to four different data sets, in the case (b) four co-scheduled tasks access to only two different data sets. To reuse the 
-data in the cache, it is necessary schedule tasks that use data sets that have been accessed by current co-scheduled tasks subsequently. Therefore, more 
-data sets are accessed by current co-scheduled tasks and there will be more opportunities that the subsequent coscheduled tasks could reuse the data in the
-shared cache. For example: in situation (a) there are $4^4$ permutations of co-scheduled tasks that could reuse the data, but only $2^4$ in situation (b). 
-According this observation, the scheduler should schedule the tasks using as many data sets as possible, but at one important condition: the total amount 
-of data set used by co-scheduled task, must be less than the total cache space, in order to avoid cache trashing.
 
-The interesting thing, is that the two described maximization goals are not in conflict each other. The explanation is straightforward: each core executes 
-a task that belongs to different sharing group, therefore co-scheduled tasks would access \textbf{different data sets}, in this way, the number of data sets 
-accessed in shared cache is maximazed.
+In figure \ref{fig:cosched_permutation} each square represents the data set used by a scheduled task, squares with different colours represent different 
+data set. In case (a), four tasks are co-scheduled and they access to four different data sets. In the case (b) four co-scheduled tasks access to only two 
+different data sets. To reuse the data in the cache, it is necessary schedule tasks that use data sets that have been accessed by current co-scheduled 
+tasks subsequently. Therefore, more data sets are accessed by current co-scheduled tasks and there will be more opportunities that the subsequent 
+coscheduled tasks could reuse the data in the shared cache. For example: in situation (a) there are $4^4$ permutations of co-scheduled tasks that could 
+reuse the data, but only $2^4$ in situation (b). According this observation, the scheduler should schedule the tasks using as many data sets as possible, 
+but at one important condition: the total amount of data set used by co-scheduled task, must be less than the total cache space, in order to avoid cache 
+trashing.
+
+The interesting thing, is that to maximize reuse of data present in private cache and to maximize reuse of data present in shared cache are not in conflict
+with each other. The explanation is straightforward: each core executes a task that belongs to different sharing group, therefore co-scheduled tasks would 
+access \textbf{different data sets}, in this way, the number of data sets accessed in shared cache is maximized.
 
 According to this theory, it is possible to list the rules applied this kind of policy:
 
@@ -479,10 +505,13 @@ According to this theory, it is possible to list the rules applied this kind of 
 	\item Schedule a task only if it doesn't cause cache thrashing.
 \end{itemize}
 
-\textit{\textbf{Mechanism and examples:}} An implementation of this policy is developed by Yang et al. \cite{taiwan}. Before describing mechanism used, it is
-necessary to remember that each task belongs to one sharing group denoted with $SG_i$ and it is characterized by its working set denoted with $TW_i$.
-Before to start, the algorithm assigns each sharing group to one cpu: if number of core (NC) is less than number of sharing groups (NS), a cpu will execute 
-more than one sharing groups, see fig. \ref{fig:possible_cosched}.
+\textit{\textbf{Mechanism and examples:}} An implementation of this policy is developed by Yang et al. \cite{taiwan}. 
+
+This implementation use an array of linked list. In each list are inserted tasks that sharing the same resources, for simplicity we call the $i-th$ list 
+$SG_i$. Each list is characterized by total working set used by task inserted in, it is denoted with $TW_i$. It is clear that these list are the 
+implementation of the sharing groups previously descibed, for this reason, from now I will call these lists sharing groups. Before to start, the algorithm 
+assigns each sharing group to one cpu: if number of core (NC) is less than number of sharing groups (NS), a cpu will execute more than one sharing groups, 
+see fig. \ref{fig:possible_cosched}.
 
 \begin{figure}[htbp]
 \centering
@@ -496,15 +525,15 @@ has defined a possible co-schedule ($PS_j$). It computes the sum of working set 
 shared cache, $PS_j$ is discarded. This procedure is repeated for all possible $PS_j$. At the end, all filtered $PS_j$ that fit into the shared cache are 
 put in a queue called $C$ and waiting for the next phase.
 
-Define the \textit{sharing number ($SC_j$)} as the number of different sharing groups belong to a possible filtered co-schedule $PS_j$. In the 
-next step, elements present in queue $C$ are orderd according their $SC_j$. In order to schedule tasks that access the most different data sets, the 
-algorithm select tasks that belong to $PS_j$ with the maximum $SC_j$.
+Before to analyze the next step, define the \textit{sharing number ($SC_j$)} as the number of different sharing groups belong to a possible filtered 
+co-schedule $PS_j$. In the next step, elements present in queue $C$ are orderd according their $SC_j$. In order to schedule tasks that access the most 
+different data sets, the algorithm select tasks that belong to $PS_j$ with the maximum $SC_j$.
 
 If $C$ is empty, it means that there isn't any possible co-schedule $PS_j$ with the total working set size $TW_j$ that fit in shared cache. Also in this 
 case, the algorithm would aim to minimize the shared cache misses by choosing the possible co-schedule with the maximum $SC_j$ and with smallest $TW_j$.
 
 An interesting aspect of this implementation, is that it is possbile to reduce also cache coherence overhead, the reason is very simple. Tasks that belong 
-to two different sharing groups don't share data, otherwise they should be in the same groups. It means that lines used in private cache by
+to two different sharing groups don't share data, otherwise they should be in the same group. It means that lines used in private cache by
 a co-scheduled tasks that are in different groups, won't never be in shared, but only in modfied or exlusive state. in this way, the overhead due to 
 management of cache coherent shared state is reduced. 
 
@@ -523,4 +552,9 @@ to obtain. To resolve this problem, the algorithm involves the programmer provid
 means to modify appllication code with additional functions. 
 \end{description}
 
+The difference between temporal locality policies data locality policies is very slight. The temporal locality policies, try to reduce cache misses 
+choosing which tasks will be scheduled in two different moments. In other words, this type of policy, for each cpu, choose which task that will be 
+scheduled after the current task in order that the next task will reuse resources already allocated in cache of each cpu. Instead data locality policies, 
+try to reduce cache misses choosing tasks that cause the lowest inter task cache interference. In other words, this type of policy make sure that all 
+scheduled task in the same moment may allocate necessary resources in shared cache.
 
