@@ -126,11 +126,11 @@ Indicates that this cache line is invalid, read/write operation on invalid cache
 Cache coherence protocols play an important role to improve efficiency of the read/write in cache. There are a lot of variant of MESI protocol, the most 
 recent variants are MESIF and MOESI.
 
-The former protocol adds the Forward state. It is only relevant for the L3 cache. This state indicates that only one cache should act as a designated 
+The former protocol adds the Forward state. This state indicates that only one cache should act as a designated 
 responder for any requests for the given line. With the standard MESI protocol, a request for cache line will receive a response from each cache that 
 contains that line in the shared state. Instead, with MESIF protocol a request will be responded to only by the cache holding the line in the Forward state.
-A cache line shared among multiple processors will be in forward state in only one L3 cache. This protocol is used in new Intel microarchitecture Nehalem 
-and it is designed for ccNUMA. The aim of this new state is to reduce communications between cache.
+A cache line shared among multiple processors will be in Forward state in only one L3 cache. This protocol is used in new Intel microarchitecture Nehalem 
+and it is designed for NUMA. The aim of this new state is to reduce communications between cache.
 
 The latter protocol add Owned state. A cache line in this state holds the most recent, correct copy of the data. Only one processor can hold the data 
 in the Owned state, all other processors that contains a copy of that data must hold the them in the shared state. A copy of data in main memory can be 
@@ -151,12 +151,12 @@ It is clear that these two architectural policy are focused on two different asp
 doesn't find requested data in any of its cache level, it knows the data it is also not present in any other core's cache. The second policy, instead, 
 allows to store more data than an inclusive cache, because for each data only one copy is stored.
 
-An example of inclusive L3 shared cache is implemented in Intel Nehalem microarchitecture. In this implementation to insure coherency across 
-all caches, the L3 cache line has additional flags that keep track of which core the data came from and a core valid bit that indicate that cache line 
-is present in some core's cache. If the data is modified in L3 cache, then the L3 cache "knows" if the data came from a different core than last time 
-and that the data in the first core needs its L1/L2 values updated with the new data. This greatly reduces the amount of traditional "snooping"
-coherency traffic between cores. Moreover the core valid bit doesn't ensure that a L3 cache line is placed also in an higher level cache, because unmodified
-cache lines may be evicted from a core's cache without notification of the L3 cache.
+An example of inclusive L3 shared cache is implemented in Intel Nehalem microarchitecture. Each cache line in the L3 contains additional "core valid" bits,
+one for each core in the system, denoting which cores may have a copy of that line in their private caches. If a "core valid" bit is set to 0, then that 
+core cannot possibly have a copy of the cache line, while a "core valid" bit set to 1 indicates it is possible (but not guaranteed) that the core in 
+question could have a private copy of the line. Since Nehalem uses the MESIF cache coherency protocol, if a cache line in L3 have more than one 
+"core valid" bits set to 1, the cache line is guaranteed to be clean and it will be in Forward state in L3, in this way, the L3 is the only
+responder for all request for that line. This greatly reduces the amount of traditional "snooping" coherency traffic between cores.
 
 An implementation of exclusive cache can be found in AMD's Shanghai processors. Theese cpus present an interesting implementation of this type of cache
 architecture, because L1 and L2 are exclusive cache, but last level shared cache (L3) is a not-inclusive cache.
