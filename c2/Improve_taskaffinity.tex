@@ -1,8 +1,19 @@
 TODO potevamo dire alla select di prendere il lock ma questo modificava troppo la logica del kernel, tenere un approccio self-contained
 TODO dove si dice che il throughput si disfa dire che la predictability aumenta per\'o le migration dan fastidio
-TODO richiamare la definizione di taskaffinity e dire cosa ricevono in input le syscalls
+TODO uso solo 3 buffer dimensions 4KB 32KB 64KB in una pagina metto 3 trace relativi a una dimensione e per le 3 macchine, o cmq i trace li metto solo
+TODO per queste dimensioni al max i grafici di sched latency li metto per tutte le dimensioni
 
-TODO cambia taskaffinity in task-affinity
+TODO se le pagine sono poche, descrivere quale evento si registra con perf
+
+
+
+TODO sta cosa la metter\'o da qualche parte
+The reason of this problem, is easily explained thanks to \textit{sched\_switch tracer} tool. It is a plugin of \textit{Ftrace} an infrastructure integrated
+in the Linux kernel that allows to measure things as context-switch latency, interrupt latency and so on. In particular, \textit{sched\_switch tracer} 
+allows to know on which runqueue a context switch occurs and which are task involved in context switch. Moreover, with this plugin, it is possible to 
+trace when a task wakes up and is enqueued on a runqueue.
+
+
 
 
 
@@ -137,7 +148,7 @@ the target runqueue. This search aborts only after scanning all the overloaded r
 In the 2.6.34 kernel version, the migration logic and all data structures involved are not changed from 2.6.31 version.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Test computers}
+\section{Test computers and benchmarks}
 
 TODO fai un elenco con le macchine usate
 
@@ -149,31 +160,93 @@ power management solutions to scale the frequency, which could
 TODO descrivere brevemente come sono fatte le macchine e dire che il numasauro usa lo shield ecc.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Taskaffinity behaviour}
+\section{Analysis of Taskaffinity behaviour}
+
+TODO 
+This section analyzes which are the improvements that task-affinity involves on different test computers TODO al variare della buffer dimension
+
+
+
 
 %-----------------------------------------------------------------------------
 \subsection{Buffer sizes}
 
-TODO far notare differenza latenze scheduling a 4KB ec.. calcolo incidenze
-TODO magari qualcosa sui tempi 
+Come gi\'a showed da lucas nel suo lavoro precedente, la lunghezza del buffer dell\'applicazione \'e un fattore determinante per le performance 
+dell\'applicazione perch\'e determina l\'ammontare del lavoro che l\'applicazione deve eseguire. In this work measures of application performances 
+recordered on test computers are comapared. The following graphics are called \textit{trace}, they show in a graphic manner scheduling executed by OS.
+
+TODO Xeon 4KB i7 4KB
+
+The first difference that becomes immediately evident, is how the different architecture of i7 and Xeon influence performance of the application.
+On Intel Xeon, all task are not well parallelized because of overhead due to scheduling latency. The scheduling latency is the time interval that starts when
+a task is enqeued on a runqueue and finish when it is executed.
+
+TODO img lucas sched latency commenta dicendo how is represented in trace
+
+To get a sense of how impact of scheduling latency change according to architecture see graphic in fig. TODO grafico sched lat
+
+TODO grafico
+
+TODO in didascalia This graphic was obtained measuring the average of scheduling latency and rapporting to average of exec time
+
+There are many factors that influence scheduling latency. In the first place, inter-chip communication are different, Intel i7 use the new Quick-path 
+Interconnect that is a point-to-point processor interconnect developed by Intel to compete with HyperTransport. This first implementation of this bus
+achieve 25.6 GB/s, which provides exactly double the theoretical bandwidth of Intel's 1600 MHz FSB, that is the best performance obtainable with FSB.
+From datasheet, Intel Xeon E5440 use a FSB at 1333 MHz. Cache architectures are different, Intel i7 uses three cache level and the LLC is shared among all 
+processors, while Intel Xeon use two separated cache blocks and each block is shared among only two cpus, therefore communication bewtween cores that belong 
+to different dies is very expensive. From these graphics is clear that on Intel Xeon a buffer of 4KB is not enough in order to neglect scheduling latency 
+overhead.
+
+TODO mettere anche un grafico sulla varianza dei singoli tasks
+
+TODO grafici a 32 e 64 se ci stanno sullo stesso foglio
+
+TODO dire che a queste dimensioni l\'overhead della sched latency viene meno, da verificare per\'o
+
+TODO il paragone dei tempi lo metterei alla fine del buffer size giustificandolo con la differenza di frequenze se c\'\'e davvero
+TODO ricontrolla la storia dei tempi maggiori 
+
 
 %-----------------------------------------------------------------------------
 \subsection{Migration issues}
-TODO dire che c'\'e il ping pong e dei problemi che la migration comporta per il warm up della cache, dire che i 2 banchi di cache sullo Xeon sono
-TODO un casino
+
+Unfortunately, current version of task-affinity is not very effective in term of reduction of task migrations. As already described in TODO lcs, during 
+the benchmark's execution, the migration pattern showed in fig. TODO is verified
+
+This problem is not related to the architecture used, it is an issue related to the logic of task-affinity. Consider the timestamp marked with orange line.
+Mixer0 has to choice cpus that have executed wave0 or wave1 therefore it has to choice cpu1 or cpu2, Mixer1 has to choice cpu3 or cpu4, Mixer2 is in 
+execution on cpu2. At marked timestamp, Mixer0 can't be executed on cpu2, that is on the last cpu that have executed it, because mixer2 is still in 
+execution on it, therefore mixer1 has to migrate. In general, any cpu mixer0 or mixer1 may choose, one of them will have to migrate, because they are 
+waken up before that mixer2 is finished and mixer2 will always choose a cpu that have last executed mixer0 or mixer1. 
+
+Tasks's migration can degrade performance because a migrated task could warm up a new cache and it could create new cache interference in a new location 
+already occupied by other tasks. In our case warm up of cache shouldn't occurs because a mixer migrates always among the same cpus.
 
 %-----------------------------------------------------------------------------
 \subsection{Cache misses}
 
-TODO stesse considerazioni per dar ragione alle considerazioni fatte per le migration
-TODO scrivere evento che si va a registrare, magari dicendo che perf pensa a fare tutto quel che serve 
-
-TODO i cache miss e i tempi medi di esecuzione
+TODO menata dello Xeon ma solo per la L2 dicendo che per i banchdi divisi ci sar\'a sempre un miss da parte dei mixer ecc..
 
 TODO dire come a 32KB la cache non conti niente
 
+
+%-----------------------------------------------------------------------------
+\subsection{Kernel overhead}
+
+TODO dire che le push e pull incidono anche loro facendo vedere che 
+
+TODO dire che si deve migliorare la varianza
+TODO capire chi migliora la varianza cache miss overhead migration (experiment cpuaffinity e task-affinity normale)
+TODO profiler push e pull, dire che anche loro hanno importanza
+TODO queste cose vanno qui perch\'e 
+
+
+TODO i cache miss e le varianze
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Patch structure}
+\section{Task-affinity improvements}
+
+TODO in fondo dire la roba di amdhal
 
 Before to explain how the patch works, it is necessary to remember the concept of task-affinity. We say that two tasks have a task-affinity relationship if 
 they share data and their execution depends upon reading or writing these data TODO cita lcs. In a producer-consumer application, the producer 
@@ -187,7 +260,7 @@ all its producers. To insert and delete a task in a \textit{taskaffinity list} t
 
 \begin{description}
 
-\item[sched\_add\_taskaffinity]. This system call adds a dependency to the current task, i.e. the task that issued the call. It receives, as parameter, the 
+\item[sched\_add\_taskaffinity:]. This system call adds a dependency to the current task, i.e. the task that issued the call. It receives, as parameter, the 
 pid of the task the current one will be dependent upon.
 
 \item[sched\_del\_taskaffinity:]. When a task does not want anymore to use the task-affinity mechanism, it is possible to remove it through this call.
@@ -200,7 +273,7 @@ enforce reuse of cache memory.
 
 The task-affinity logic influences wake up and migration of a task. As we have previously seen, in \textit{try\_to\_wake\_up} the choice of cpu where to 
 put the to be waken task is made by \texttt{select\_task\_rq\_rt} TODO ref snip. This function is modified in this way: given the input task $p$, the 
-function doesn't call \texttt{find\_lowest\_rq} but it loops for all element present in the $p$'s taskaffinity list and build a mask, called 
+function doesn't call \texttt{find\_lowest\_rq} but it loops for all element present in the $p$'s \textit{taskaffinity list} and build a mask, called 
 \textit{affinity\_mask}, with cpus that have executed a task present in $p$'s \textit{taskaffinity list}. Finished the loop, the function returns the cpu 
 with the runqueue that have the lowest number of Real-Time tasks. Only if the mask is empty, the function calls \texttt{find\_lowest\_rq} to choose a cpu
 in the standard way. 
@@ -209,7 +282,7 @@ In the current version of task-affinity, a task that "respect" task-affinity, th
 relationships, isn't able to migrate. In plain words, \texttt{push\_rt\_task} and \texttt{pull\_rt\_task} can't move tasks that "respect" task-affinity.
 
 The aim of this policy is clear: when a task wakes up, the policy tries to select the best cpu for that task and, if it finds it, it blocks the task on the 
-best runqueue until the task's execution. For this reason the key point of taskaffinity logic is the \texttt{select\_task\_rq\_rt}. In the optimal case, 
+best runqueue until the task's execution. For this reason the key point of task-affinity logic is the \texttt{select\_task\_rq\_rt}. In the optimal case, 
 producers and consumers will be executed subsequenlty always on the same cpu.
 
 Nevertheless, in practice, the choosen cpu for $p$ is next to never the optimal cpu. The reason is very simple. The choice of the best 
@@ -229,59 +302,71 @@ Therefore, the deny to pull and push can improve predictability of the applicati
 Predictability is an important aspect for Real-time systems, but if we have a very bad throughput we don't exploit the potentiality of multicore platforms.
 
 The aim of the patch developed it to improve the concept of temporal locality and to improve the migration policy in order to use also the functions 
-involved in the migration mechanism to exploit the concept of taskaffinity. Furthermore, the patch make task-affinity more robust synchronizing access at 
+involved in the migration mechanism to exploit the concept of task-affinity. Furthermore, the patch make task-affinity more robust synchronizing access at 
 data structures used.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Patch structure}
+
+TODO
 
 %-----------------------------------------------------------------------------
 \subsection{Temporal locality}
 
+TODO Patch is optimized in wake migrattion.. say something
+
+TODO temporal locality non come subsection ma come titolo in grassetto
+
+TODO Temporal locality
+
 To ensure that a consumer will be the next executed task after a producer, it is necessary to change what \texttt{select\_task\_rq\_rt} "see". As I 
-previously said, during its loop, \texttt{select\_task\_rq\_rt} check for cpu that \textbf{have executed} a task in $p$'s taskaffinity list. It means
-that, in that moment, those cpus could be executing a task that it is not a producer and then, L1 cache could be already dirty. For this reason, at each
-runqueue was added a field named \texttt{last\_tsk} that contains the last task executed in a runqueue. This field is updated at each context switch 
+previously said, during its loop, \texttt{select\_task\_rq\_rt} check for cpu that \textbf{have executed} a task in $p$'s \textit{taskaffinity list}. 
+It means that, in that moment, those cpus could be executing a task that it is not a producer and then, L1 cache could be already dirty. For this reason, 
+at each runqueue was added a field named \texttt{last\_tsk} that contains the last task executed in a runqueue. This field is updated at each context switch 
 if the next task to be executed is different from idle. In this way, if current task on runqueue is not idle, this field represents, the task in execution. 
 
 TODO figura last tsk
 
 With this additional field, \texttt{select\_task\_rq\_rt} "knows" which is the task currently executed on each runqueue. In this way, cpus that during 
-\texttt{select\_task\_rq\_rt} are executing a task that is not in $p$'s taskaffinity list are not inserted in \texttt{affinity\_mask}.
+\texttt{select\_task\_rq\_rt} are executing a task that is not in $p$'s \textit{taskaffinity list} are not inserted in \texttt{affinity\_mask}.
 
 This change is not enough. Consider this situation: two different cpus that we call CPU\_A and CPU\_B are executing two different istances of 
 \texttt{try\_to\_wake\_up}. Respectively, they are called for task $p$ and task $q$: the former has task-affinity relationship, the latter is a generic 
-Real-time task, both tasks have the same priority. Suppose that the current task on CPU\_A is a task in $p$'s taskaffinity list and then 
+Real-time task, both tasks have the same priority. Suppose that the current task on CPU\_A is a task in $p$'s \textit{taskaffinity list} and then 
 \texttt{select\_task\_rq\_rt} choose CPU\_A for $p$. Suppose that \texttt{try\_to\_wake\_up} that wakes up $q$ chooses CPU\_A and enqueue task $q$ on 
 runqueue of CPU\_A. Task $p$ is not still enqueued, therefore when it will be enqueued, it will be preceeded by $q$ and then the next task that will
 be executed on CPU\_A is $q$.
 
 TODO figura enqueue in testa
 
-To resolve this problem, I have modified enqueuing of task in this manner: a task that "respects" taskaffinity is enqueued on the top of a runqueue and not 
+To resolve this problem, I have modified enqueuing of task in this manner: a task that "respects" task-affinity is enqueued on the top of a runqueue and not 
 on tail. 
 
-In this way, if two Real-time tasks are on the same runqueue and have the same priority, but one of them "respects" taskaffinity, the next task that 
-will be executed is the task that "respects" taskaffinity. 
+In this way, if two Real-time tasks are on the same runqueue and have the same priority, but one of them "respects" task-affinity, the next task that 
+will be executed is the task that "respects" task-affinity. 
 
 Until now we have modified the logic present in \texttt{try\_to\_wake\_up}. A carefully reader, will have noted that with this strategy a task with 
-task-affinity can move up a task without taskaffinity only if the latter is enqeued \textit{before} the former.
+task-affinity can move up a task without task-affinity only if the latter is enqeued \textit{before} the former.
 
 To resolve this problem, migration mechanism is used. When the \texttt{try\_to\_wake\_up} has enqueued task $p$, it calls \texttt{task\_woken} in order to
 checks if $p$ can be executed on the selected runqueue or not. If on runqueue there is a task with priority equal or higher than the $p$'s priority and 
 this task precede $p$, \texttt{push\_rt\_task} is called and $p$ can be pushed on another cpu. To select the cpu where to push $p$, the same mechanism used 
-in \texttt{select\_task\_rq\_rt} is adopted. Therefore, $p$ will be pushed where it is in execution a task in $p$'s taskaffinity list, if it is impossible
-standard push criteria are adopted and $p$ will be pushed on a cpu that executing a task with lower priority than $p$. Since now also \texttt{push\_rt\_task}
-is involved in task-affinity logic, and it use the same mechanism used in \texttt{select\_task\_rq\_rt},  the mechanism used to select taskaff TODO
-mettere il nome della funzione usata nella patch della find\_lowest. Obviously, in order to push a task that "respect" task-affinity, it is necessary 
-insert it in a \textit{pushable list}.  
+in \texttt{select\_task\_rq\_rt} is adopted. Therefore, $p$ will be pushed where it is in execution a task in $p$'s \textit{taskaffinity list}, if it is 
+impossible standard push criteria are adopted and $p$ will be pushed on a cpu that executing a task with lower priority than $p$. Since now also 
+\texttt{push\_rt\_task} is involved in task-affinity logic, and it use the same mechanism used in \texttt{select\_task\_rq\_rt},  the mechanism used to 
+select taskaff TODO mettere il nome della funzione usata nella patch della find\_lowest. Obviously, in order to push a task that "respect" task-affinity, 
+it is necessary insert it in a \textit{pushable list}.  
 
 
 TODO alla fine faccio un riassunto magari lo metto in tabella
 
-In the table TODO ref are reassumed change apported to current version of taskaffinity, in order to improve temporal locality.
+In the table TODO ref are reassumed change apported to current version of task-affinity, in order to improve temporal locality.
 
 %-----------------------------------------------------------------------------
 \subsection{Synchronization}
 
-In the current version of taskaffinity, accesses to data structures used to manage task-affinity are made by user or by kernel. The resource that must be
+
+In the current version of task-affinity, accesses to data structures used to manage task-affinity are made by user or by kernel. The resource that must be
 synchronized is \texttt{taskaffinity\_list} TODO del followme non sono sicuro
 
 \begin{description}
@@ -298,18 +383,18 @@ TODO sezione di codice
 task is exiting. During this phase, all resources used by a task, pid included, are deallocated therefore, when \texttt{task\_affinity\_notify\_exit} is 
 called, \textit{tasklist\_lock} is acquired. This is not enough because in that moment \texttt{select\_task\_rq\_rt} can access to task-affinity data 
 structure of the exiting task, for this reason another layer of synchronization is needed. To resolve this problem, each task has its own read-write lock 
-named \textit{taskaff\_lock} to protect its taskaffinity data structures. 
+named \textit{taskaff\_lock} to protect its task-affinity data structures. 
 
 \end{description}
 
 TODO immagine accesso alle strutture dati
 
 In figure are represented the two step of sycnhronization. In step (a) syscalls try to acquire \textit{tasklist\_lock} in order to avoid to access to a 
-\textit{taskaffinity list} of an exiting task. In step (b) all functions that want to access to taskaffinity data structure of a certain task, must 
-acquire the \textit{taskaff\_lock} that protect those structures. A read-write lock was choosen because reads on taskaffinity data structures are 
+\textit{taskaffinity list} of an exiting task. In step (b) all functions that want to access to task-affinity data structure of a certain task, must 
+acquire the \textit{taskaff\_lock} that protect those structures. A read-write lock was choosen because reads on task-affinity data structures are 
 most frequently than writes. Reads are performed by \texttt{select\_task\_rq\_rt} while writes are executed only by the syscalls and 
 \texttt{task\_affinity\_notify\_exit}.
 
 
-
-
+TODO  alla fine della sezione metto il commento della legge di amdhal che ha fatto lcs per dire quello che lui ipotizza lo scheduler che ha fatto
+io invece dico che voglio anticipare quindi lo speed up \'e differente ecc.
