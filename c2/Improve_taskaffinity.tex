@@ -2,8 +2,8 @@ TODO potevamo dire alla select di prendere il lock ma questo modificava troppo l
 TODO dove si dice che il throughput si disfa dire che la predictability aumenta per\'o le migration dan fastidio
 TODO uso solo 3 buffer dimensions 4KB 32KB 64KB in una pagina metto 3 trace relativi a una dimensione e per le 3 macchine, o cmq i trace li metto solo
 TODO per queste dimensioni al max i grafici di sched latency li metto per tutte le dimensioni
-
 TODO se le pagine sono poche, descrivere quale evento si registra con perf
+
 
 
 
@@ -220,7 +220,28 @@ execution on it, therefore mixer1 has to migrate. In general, any cpu mixer0 or 
 waken up before that mixer2 is finished and mixer2 will always choose a cpu that have last executed mixer0 or mixer1. 
 
 Tasks's migration can degrade performance because a migrated task could warm up a new cache and it could create new cache interference in a new location 
-already occupied by other tasks. In our case warm up of cache shouldn't occurs because a mixer migrates always among the same cpus.
+already occupied by other tasks. 
+
+In order to measure how much this migration pattern increase miss rate of the application, this experiment is performed:
+Two run of benchmark are performed, in the first run all tasks are pinned on a specific cpu and they can't mirgate, the assignment is: 
+
+\begin{itemize}
+\item \textit{Wave0 -> cpu0}
+\item \textit{Wave1 -> cpu1}
+\item \textit{Wave2 -> cpu2}
+\item \textit{Wave3 -> cpu3}
+\item \textit{Mixer0 -> cpu0}
+\item \textit{Mixer1 -> cpu2}
+\item \textit{Mixer2 -> cpu2}
+\end{itemize}
+
+In the second run only waves are pinned on cpus 0 1 2 3. 
+
+With this experiment it is possible to observe  TODO sperare che funzioni
+
+TODO vale la pena farlo su tutti e tre?
+
+TODO sta frase non so se buttarla, In our case warm up of cache shouldn't occurs because a mixer migrates always among the same cpus.
 
 %-----------------------------------------------------------------------------
 \subsection{Cache misses}
@@ -230,11 +251,6 @@ TODO menata dello Xeon ma solo per la L2 dicendo che per i banchdi divisi ci sar
 TODO dire come a 32KB la cache non conti niente
 
 
-%-----------------------------------------------------------------------------
-\subsection{Kernel overhead}
-
-TODO dire che le push e pull incidono anche loro facendo vedere che 
-
 TODO dire che si deve migliorare la varianza
 TODO capire chi migliora la varianza cache miss overhead migration (experiment cpuaffinity e task-affinity normale)
 TODO profiler push e pull, dire che anche loro hanno importanza
@@ -243,10 +259,25 @@ TODO queste cose vanno qui perch\'e
 
 TODO i cache miss e le varianze
 
+%-----------------------------------------------------------------------------
+\subsection{profile push pull}
+
+TODO dire che anche queste funzioni rompono il cazzo e incidono sulla varianza dell\'applicazione
+
+Functions used to perform task migration influence the predictability of the application, especially when buffer dimension is greater or euqual to 32KB, 
+because in that case, there isn't any improvement for cache misses and the variance of the execution time of these functions influence the predictability
+of the application. 
+
+
+
+TODO test per tutti e per le diverse dimensioni
+
+
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Task-affinity improvements}
-
-TODO in fondo dire la roba di amdhal
 
 Before to explain how the patch works, it is necessary to remember the concept of task-affinity. We say that two tasks have a task-affinity relationship if 
 they share data and their execution depends upon reading or writing these data TODO cita lcs. In a producer-consumer application, the producer 
@@ -295,7 +326,7 @@ this situation.
 
 TODO img finestra temporale
 
-The current version of task-affinity ensures a weak concept of temporal locality because it doesn't ensure, when it is possible, that the next task executed 
+The current version of task-affinity ensures a weak concept of temporal locality because it doesn't ensure, when it is possible, that the next task executed
 after a producer is a consumer. Another problem of the current version of task-affinity is the migration policy. It is not quite flexible. Pull and push 
 functions mantain the system balanced, and guarantee that every cpu executes always the higher priority Real-time task present in its runqueue.
 Therefore, the deny to pull and push can improve predictability of the application and can degrade singnificantly the throughput of the application.
@@ -355,7 +386,7 @@ in \texttt{select\_task\_rq\_rt} is adopted. Therefore, $p$ will be pushed where
 impossible standard push criteria are adopted and $p$ will be pushed on a cpu that executing a task with lower priority than $p$. Since now also 
 \texttt{push\_rt\_task} is involved in task-affinity logic, and it use the same mechanism used in \texttt{select\_task\_rq\_rt},  the mechanism used to 
 select taskaff TODO mettere il nome della funzione usata nella patch della find\_lowest. Obviously, in order to push a task that "respect" task-affinity, 
-it is necessary insert it in a \textit{pushable list}.  
+it is necessary insert it in a \textit{pushable list}. 
 
 
 TODO alla fine faccio un riassunto magari lo metto in tabella
