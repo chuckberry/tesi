@@ -4,6 +4,7 @@ TODO uso solo 3 buffer dimensions 4KB 32KB 64KB in una pagina metto 3 trace rela
 TODO per queste dimensioni al max i grafici di sched latency li metto per tutte le dimensioni
 TODO se le pagine sono poche, descrivere quale evento si registra con perf
 
+TODO mettere anche un grafico sulla varianza dei singoli tasks
 
 
 
@@ -12,10 +13,6 @@ The reason of this problem, is easily explained thanks to \textit{sched\_switch 
 in the Linux kernel that allows to measure things as context-switch latency, interrupt latency and so on. In particular, \textit{sched\_switch tracer} 
 allows to know on which runqueue a context switch occurs and which are task involved in context switch. Moreover, with this plugin, it is possible to 
 trace when a task wakes up and is enqueued on a runqueue.
-
-
-
-
 
 In this chapter we present which are optimization performend and why. we see ... TODO 
 TODO dire che nella sezione patch structure spiego il funz. della patch portata al 2.6.34
@@ -171,25 +168,61 @@ This section analyzes which are the improvements that task-affinity involves on 
 %-----------------------------------------------------------------------------
 \subsection{Buffer sizes}
 
-Come gi\'a showed da lucas nel suo lavoro precedente, la lunghezza del buffer dell\'applicazione \'e un fattore determinante per le performance 
-dell\'applicazione perch\'e determina l\'ammontare del lavoro che l\'applicazione deve eseguire. In this work measures of application performances 
-recordered on test computers are comapared. The following graphics are called \textit{trace}, they show in a graphic manner scheduling executed by OS.
+The length of buffer determine how long is the work executed by producers and consumers. It was showed in \cite{lcs} that if buffer used is too short and 
+consequently tasks have very few work to do in user-space side, the parallelism provided by the SMP system is not well profited. For this reason, in 
+\cite{lcs} a buffer of 4KB was used, in this way, parallelism was well profited. The following graphics are called \textit{trace}, they show in a graphic 
+manner the scheduling behaviour of the application.
 
-TODO Xeon 4KB i7 4KB
+\newpage
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\widefigure]{images/4KB_Xeon.eps}
+\caption{\figurecaption{trace Xeon}}
+\label{fig:trace_xeon}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\widefigure]{images/4KB_i7.eps}
+\caption{\figurecaption{trace i7}}
+\label{fig:trace_i7}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\widefigure]{images/4KB_Xeon.eps}
+\caption{\figurecaption{trace AMD}}
+\label{fig:trace_xeon}
+\end{figure}
+
+\newpage
+
+The following graphics visualize the average execution times of each task on different architecures using a buffer of 4KB 8KB 16KB 32KB 64KB
+
+TODO graphic
 
 The first difference that becomes immediately evident, is how the different architecture of i7 and Xeon influence performance of the application.
+With 4KB, times on i7 increases by $~ 2x$ for waves, mixer0 and mixer1 have the about the same time of both architectures and mixer2 decreases its time by 
+$~ 1.3x$. With others dimensions, times on i7 are worse than times on Xeon.
+
+TODO AMD?
+
+Another interesting difference is how change the time employed by mixers, on different architecture. On i7 execution time of mixer2 increase by $~ 5\%$ 
+of the time of other mixers. On Xeon execution time of mixer2 increase more than $15\%$ of the time of other mixers.
+
 On Intel Xeon, all task are not well parallelized because of overhead due to scheduling latency. The scheduling latency is the time interval that starts when
-a task is enqeued on a runqueue and finish when it is executed.
-
-TODO img lucas sched latency commenta dicendo how is represented in trace
-
-To get a sense of how impact of scheduling latency change according to architecture see graphic in fig. TODO grafico sched lat
+a task is enqeued on a runqueue and finish when it is executed \cite{lcs}. In \textit{trace} scheduling latency is time interval red-ink. To get a sense 
+of how impact of scheduling latency change according to architecture see graphic in fig. TODO grafico sched lat
 
 TODO grafico
 
 TODO in didascalia This graphic was obtained measuring the average of scheduling latency and rapporting to average of exec time
 
-There are many factors that influence scheduling latency. In the first place, inter-chip communication are different, Intel i7 use the new Quick-path 
+There are many factors that influence scheduling latency. 
+
+
+In the first place, inter-chip communication are different, Intel i7 use the new Quick-path 
 Interconnect that is a point-to-point processor interconnect developed by Intel to compete with HyperTransport. This first implementation of this bus
 achieve 25.6 GB/s, which provides exactly double the theoretical bandwidth of Intel's 1600 MHz FSB, that is the best performance obtainable with FSB.
 From datasheet, Intel Xeon E5440 use a FSB at 1333 MHz. Cache architectures are different, Intel i7 uses three cache level and the LLC is shared among all 
@@ -197,27 +230,71 @@ processors, while Intel Xeon use two separated cache blocks and each block is sh
 to different dies is very expensive. From these graphics is clear that on Intel Xeon a buffer of 4KB is not enough in order to neglect scheduling latency 
 overhead.
 
-TODO mettere anche un grafico sulla varianza dei singoli tasks
+\newpage
 
-TODO grafici a 32 e 64 se ci stanno sullo stesso foglio
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\widefigure]{images/32KB_Xeon.eps}
+\caption{\figurecaption{trace Xeon}}
+\label{fig:trace_xeon}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\widefigure]{images/32KB_i7.eps}
+\caption{\figurecaption{trace i7}}
+\label{fig:trace_i7}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\widefigure]{images/32KB_Xeon.eps}
+\caption{\figurecaption{trace AMD}}
+\label{fig:trace_xeon}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\widefigure]{images/64KB_Xeon.eps}
+\caption{\figurecaption{trace Xeon}}
+\label{fig:trace_xeon}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\widefigure]{images/64KB_i7.eps}
+\caption{\figurecaption{trace i7}}
+\label{fig:trace_i7}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\widefigure]{images/64KB_Xeon.eps}
+\caption{\figurecaption{trace AMD}}
+\label{fig:trace_xeon}
+\end{figure}
+
+\newpage
 
 TODO dire che a queste dimensioni l\'overhead della sched latency viene meno, da verificare per\'o
 
-TODO il paragone dei tempi lo metterei alla fine del buffer size giustificandolo con la differenza di frequenze se c\'\'e davvero
+%TODO il paragone dei tempi lo metterei alla fine del buffer size giustificandolo con la differenza di frequenze se c\'\'e davvero
 TODO ricontrolla la storia dei tempi maggiori 
 
 
 %-----------------------------------------------------------------------------
 \subsection{Migration issues}
 
-Unfortunately, current version of task-affinity is not very effective in term of reduction of task migrations. As already described in TODO lcs, during 
+Unfortunately, current version of task-affinity is not very effective in term of reduction of task migrations. As already described in \cite{lcs}, during 
 the benchmark's execution, the migration pattern showed in fig. TODO is verified
 
+TODO trace con mig pattern
+
 This problem is not related to the architecture used, it is an issue related to the logic of task-affinity. Consider the timestamp marked with orange line.
-Mixer0 has to choice cpus that have executed wave0 or wave1 therefore it has to choice cpu1 or cpu2, Mixer1 has to choice cpu3 or cpu4, Mixer2 is in 
-execution on cpu2. At marked timestamp, Mixer0 can't be executed on cpu2, that is on the last cpu that have executed it, because mixer2 is still in 
-execution on it, therefore mixer1 has to migrate. In general, any cpu mixer0 or mixer1 may choose, one of them will have to migrate, because they are 
-waken up before that mixer2 is finished and mixer2 will always choose a cpu that have last executed mixer0 or mixer1. 
+Mixer0 has to choice cpus that have executed Wave0 or Wave1 therefore it has to choice cpu1 or cpu2, Mixer1 has to choice cpu3 or cpu4, Mixer2 is in 
+execution on cpu2. At marked timestamp, Mixer0 can't be executed on cpu2, that is on the last cpu that have executed it, because Mixer2 is still in 
+execution on it, therefore mixer1 has to migrate. In general, any cpu Mixer0 or Mixer1 may choose, one of them will have to migrate, because they are 
+waken up before that Mixer2 is finished and Mixer2 will always choose a cpu that have last executed mixer0 or Mixer1. 
 
 Tasks's migration can degrade performance because a migrated task could warm up a new cache and it could create new cache interference in a new location 
 already occupied by other tasks. 
@@ -280,7 +357,7 @@ TODO test per tutti e per le diverse dimensioni
 \section{Task-affinity improvements}
 
 Before to explain how the patch works, it is necessary to remember the concept of task-affinity. We say that two tasks have a task-affinity relationship if 
-they share data and their execution depends upon reading or writing these data TODO cita lcs. In a producer-consumer application, the producer 
+they share data and their execution depends upon reading or writing these data \cite{lcs}. In a producer-consumer application, the producer 
 is the one that writes to the shared buffer, while the consumer is the one that reads it. The consumer depends on data generated by producer since it needs 
 them in order to be able to run, therefore we say that the consumer has a task-affinity relationship toward the producer.
 
