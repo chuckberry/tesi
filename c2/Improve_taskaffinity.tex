@@ -6,6 +6,9 @@ TODO se le pagine sono poche, descrivere quale evento si registra con perf
 
 TODO mettere anche un grafico sulla varianza dei singoli tasks
 
+TODO i grafici per task sono troppi non so se metterli
+The following graphics visualize the average and variance of execution times of each benchmark's thread on different architecures using different buffer 
+dimensions. They show fine-grained overview on how vanilla and task-affinity impact on predictability and throughput of the application.
 
 
 TODO sta cosa la metter\'o da qualche parte
@@ -156,185 +159,190 @@ power management solutions to scale the frequency, which could
 
 TODO descrivere brevemente come sono fatte le macchine e dire che il numasauro usa lo shield ecc.
 
+TODO mettila in test computers
+Execution of benchmark is divided in three steps:
+
+\begin{enumerate}
+\item Each wave performs only a write on its buffer
+\item Each intermediate mixer read two buffers filled by waves and write on its buffer, for example mixer0 read data from buffer filled by wave0 and from 
+buffer filled by wave1 and then write its buffer.
+\item Final mixer, that is mixer2, reads data from buffers written by mixer0 and mixer1 and write its buffer, then copy the content of its buffer on 
+standard output using a write syscall
+\end{enumerate}
+
+TODO figura benchmark
+
+TODO definizione di sample del benchmark
+
+TODO dire la storia della metrica usata
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Analysis of Taskaffinity behaviour}
 
 TODO 
 This section analyzes which are the improvements that task-affinity involves on different test computers TODO al variare della buffer dimension
 
+TODO 
+dire che l\'AMD non lo cago perch\'e ha il protocollo diverso ec..
 
+TODO forse \'e meglio mettere la roba dopo qui
 
 
 %-----------------------------------------------------------------------------
-\subsection{Buffer sizes}
+\subsection{Application's performance}
 
 The length of buffer determine how long is the work executed by producers and consumers. It was showed in \cite{lcs} that if buffer used is too short and 
 consequently tasks have very few work to do in user-space side, the parallelism provided by the SMP system is not well profited. For this reason, in 
-\cite{lcs} a buffer of 4KB was used, in this way, parallelism was well profited. The following graphics are called \textit{trace}, they show in a graphic 
-manner the scheduling behaviour of the application.
-
-\newpage
+\cite{lcs} a buffer of 4KB was used, in this way, parallelism was well profited. In the following graphics, we compare vanilla and current version 
+of task-affinity in terms of predictability and throughput on different architectures and using different buffer dimensions.
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=\widefigure]{images/4KB_Xeon.eps}
-\caption{\figurecaption{trace Xeon}}
-\label{fig:trace_xeon}
+\includegraphics[width=\widefigure]{images/time_avg_Xeon.eps}
+\caption{\figurecaption{Average of execution time of a sample on Xeon}}
+\label{fig:avg_xeon}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=\widefigure]{images/4KB_i7.eps}
-\caption{\figurecaption{trace i7}}
-\label{fig:trace_i7}
-\end{figure}
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=\widefigure]{images/4KB_Xeon.eps}
-\caption{\figurecaption{trace AMD}}
-\label{fig:trace_xeon}
+\includegraphics[width=\widefigure]{images/time_var_Xeon.eps}
+\caption{\figurecaption{Variance of execution time of a sample on Xeon}}
+\label{fig:var_xeon}
 \end{figure}
 
 \newpage
 
-The following graphics visualize the average execution times of each task on different architecures using a buffer of 4KB 8KB 16KB 32KB 64KB
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\widefigure]{images/time_avg_i7.eps}
+\caption{\figurecaption{Average of execution time of a sample on i7}}
+\label{fig:avg_xeon}
+\end{figure}
 
-TODO graphic
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\widefigure]{images/time_var_i7.eps}
+\caption{\figurecaption{Variance of execution time of a sample on i7}}
+\label{fig:var_xeon}
+\end{figure}
+
+\begin{table}[htbp]
+\begin{center}
+\begin{tabular}{l|c|c|c}
+	\hline
+	& Xeon (Speedup) & i7 (Speedup) \\ \hline
+	$4KB$  & -1.89\% & 2.33\% \\ \hline
+	$8KB$  & -0.82\% & 6.42\% \\ \hline
+	$16KB$ & -0.31\% & 8.42\% \\ \hline
+	$32KB$ & -3.96\% & 6.53\% \\ \hline
+	$64KB$ & -3.25\% & -5.14\% \\ \hline
+	\hline
+\end{tabular}
+\caption{Speedup obtained with task-affinity on different architectures with different buffer}
+\label{tab:speedup_xeon_i7}
+\end{center}
+\end{table}
+
+Speedup on Table \ref{tab:speedup_xeon_i7} is calculated in this way:
+
+\begin{equation}
+        AVS taskaffinity - AVS vanilla / AVS vanilla
+\label{eq:miss_rate}
+\end{equation}
+
+As shown in graphics and as summarized in Table \ref{tab:speedup_xeon_i7}, current version of task-affinity is not effective on Intel Xeon. 
+In term of throughput task-affinity is not better than vanilla in any architecture. In term of predictability see TODO task-affinity is better than vanilla,
+especially with large buffer on Intel i7.
+TODO dire qualcos\'altro magari
+
+Now we analyze possible factors that can influence predicatbility of the application.
+
+
+TODO questo pezzo non qui
 
 The first difference that becomes immediately evident, is how the different architecture of i7 and Xeon influence performance of the application.
 With 4KB, times on i7 increases by $~ 2x$ for waves, mixer0 and mixer1 have the about the same time of both architectures and mixer2 decreases its time by 
-$~ 1.3x$. With others dimensions, times on i7 are worse than times on Xeon.
+$~ 1.3x$. With others dimensions, times on i7 are worse than times on Xeon. With other buffer dimensions wave TODO degradano sempre
 
-TODO AMD?
+Another interesting difference is how change the relationships between execution times of different benchmark's threads, on different architecture. 
 
-Another interesting difference is how change the time employed by mixers, on different architecture. On i7 execution time of mixer2 increase by $~ 5\%$ 
-of the time of other mixers. On Xeon execution time of mixer2 increase more than $15\%$ of the time of other mixers.
+Mixer2 employes more time than other mixers because it performs and additional write on standard ouput. It is interesting that on i7 execution time of 
+Mixer2 increase by $~ 5\%$ of the time of other mixers. On Xeon execution time of mixer2 increase more than $15\%$ of the time of other mixers. 
 
-On Intel Xeon, all task are not well parallelized because of overhead due to scheduling latency. The scheduling latency is the time interval that starts when
-a task is enqeued on a runqueue and finish when it is executed \cite{lcs}. In \textit{trace} scheduling latency is time interval red-ink. To get a sense 
-of how impact of scheduling latency change according to architecture see graphic in fig. TODO grafico sched lat
-
-TODO grafico
-
-TODO in didascalia This graphic was obtained measuring the average of scheduling latency and rapporting to average of exec time
-
-There are many factors that influence scheduling latency. 
-
-
-In the first place, inter-chip communication are different, Intel i7 use the new Quick-path 
-Interconnect that is a point-to-point processor interconnect developed by Intel to compete with HyperTransport. This first implementation of this bus
-achieve 25.6 GB/s, which provides exactly double the theoretical bandwidth of Intel's 1600 MHz FSB, that is the best performance obtainable with FSB.
-From datasheet, Intel Xeon E5440 use a FSB at 1333 MHz. Cache architectures are different, Intel i7 uses three cache level and the LLC is shared among all 
-processors, while Intel Xeon use two separated cache blocks and each block is shared among only two cpus, therefore communication bewtween cores that belong 
-to different dies is very expensive. From these graphics is clear that on Intel Xeon a buffer of 4KB is not enough in order to neglect scheduling latency 
-overhead.
-
-\newpage
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=\widefigure]{images/32KB_Xeon.eps}
-\caption{\figurecaption{trace Xeon}}
-\label{fig:trace_xeon}
-\end{figure}
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=\widefigure]{images/32KB_i7.eps}
-\caption{\figurecaption{trace i7}}
-\label{fig:trace_i7}
-\end{figure}
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=\widefigure]{images/32KB_Xeon.eps}
-\caption{\figurecaption{trace AMD}}
-\label{fig:trace_xeon}
-\end{figure}
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=\widefigure]{images/64KB_Xeon.eps}
-\caption{\figurecaption{trace Xeon}}
-\label{fig:trace_xeon}
-\end{figure}
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=\widefigure]{images/64KB_i7.eps}
-\caption{\figurecaption{trace i7}}
-\label{fig:trace_i7}
-\end{figure}
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=\widefigure]{images/64KB_Xeon.eps}
-\caption{\figurecaption{trace AMD}}
-\label{fig:trace_xeon}
-\end{figure}
-
-\newpage
-
-TODO dire che a queste dimensioni l\'overhead della sched latency viene meno, da verificare per\'o
-
-%TODO il paragone dei tempi lo metterei alla fine del buffer size giustificandolo con la differenza di frequenze se c\'\'e davvero
-TODO ricontrolla la storia dei tempi maggiori 
 
 
 %-----------------------------------------------------------------------------
-\subsection{Migration issues}
+\subsection{Migration issues and cache misses}
 
-Unfortunately, current version of task-affinity is not very effective in term of reduction of task migrations. As already described in \cite{lcs}, during 
-the benchmark's execution, the migration pattern showed in fig. TODO is verified
+In the following graphics visualize cache missed obtained on Intel Xeon and on Itel i7
+ 
+As we can see,  
+
+An important factor that influence cache miss is migration of tasks. Unfortunately, current version of task-affinity is not very effective in term of 
+reduction of task's migrations. As already described in \cite{lcs}, during the benchmark's execution, mixer0 or mixer1 bounce from two different cpus, see
+fig. TODO 
 
 TODO trace con mig pattern
 
-This problem is not related to the architecture used, it is an issue related to the logic of task-affinity. Consider the timestamp marked with orange line.
-Mixer0 has to choice cpus that have executed Wave0 or Wave1 therefore it has to choice cpu1 or cpu2, Mixer1 has to choice cpu3 or cpu4, Mixer2 is in 
-execution on cpu2. At marked timestamp, Mixer0 can't be executed on cpu2, that is on the last cpu that have executed it, because Mixer2 is still in 
-execution on it, therefore mixer1 has to migrate. In general, any cpu Mixer0 or Mixer1 may choose, one of them will have to migrate, because they are 
-waken up before that Mixer2 is finished and Mixer2 will always choose a cpu that have last executed mixer0 or Mixer1. 
+This problem is not related to the architecture or buffer dimension, it is an issue related to the logic of task-affinity. To understand the reason of 
+this problem see fig. TODO i7. Consider step A. According to task-affinty logic Mixer0 has to choose a cpu that have executed wave0 or wave1 
+(cpu2 or cpu4), Mixer2 has to choose a cpu that have executed Mixer0 or Mixer1 (cpu3 or cpu1). Mixer0 chooses the least loaded runqeue, therefore it 
+chooses cpu4. At ctep B Mixer2 can choose cpu4 or cpu1, they have the same number of Real-time task, therefore Mixer2 choose the first cpu in its list, 
+that is cpu 4. At step C, mixer0 has to choose cpu2 or cpu4 again, it can't choose cpu4, as in step A, because it is occupied by mixer2, so mixer0 has to
+be executed on cpu2. Since mixer0 or mixer1 have to always choose a cpu occupied by mixer2, one of them will have to migrate.
 
-Tasks's migration can degrade performance because a migrated task could warm up a new cache and it could create new cache interference in a new location 
-already occupied by other tasks. 
-
-In order to measure how much this migration pattern increase miss rate of the application, this experiment is performed:
+Task's migration can degrade performance because a migrated task could warm up a new cache and it could create new cache interference in a new location 
+already occupied by other tasks. In order to measure how much this migration pattern increase miss rate of the application, this experiment is performed:
 Two run of benchmark are performed, in the first run all tasks are pinned on a specific cpu and they can't mirgate, the assignment is: 
 
-\begin{itemize}
-\item \textit{Wave0 -> cpu0}
-\item \textit{Wave1 -> cpu1}
-\item \textit{Wave2 -> cpu2}
-\item \textit{Wave3 -> cpu3}
-\item \textit{Mixer0 -> cpu0}
-\item \textit{Mixer1 -> cpu2}
-\item \textit{Mixer2 -> cpu2}
-\end{itemize}
+TODO mettili in tabella
+
+%\begin{table}[htbp]
+%\centering
+%%\subtable[All task pinned \label{tab:all_pinned}]{%
+%\subtable[]{%
+% \begin{tabular}{c|c}
+%	\hline
+%	Task & CPU \\ \hline
+%	Wave0 & 1  \\ \hline
+%	Wave1 & 2 \\ \hline
+%	Wave2 & 3 \\ \hline
+%	Wave3 & 4 \\ \hline
+%	Mixer0 & 1 \\ \hline
+%	Mixer1 & 3 \\ \hline
+%	Mixer2 & 3 \\ \hline
+% \end{tabular}
+%}\qquad\qquad
+%%\subtable[only waves are pinned \label{tab:cpuaff_waves}]{%
+%\subtable[]{%
+% \begin{tabular}{c|c}
+%	\hline
+%	Task & CPU \\ \hline
+%	Wave0 & 1  \\ \hline
+%	Wave1 & 2 \\ \hline
+%	Wave2 & 3 \\ \hline
+%	Wave3 & 4 \\ \hline
+% \end{tabular}
+%}
+%\caption{TODO}
+%\end{table}
 
 In the second run only waves are pinned on cpus 0 1 2 3. 
 
-With this experiment it is possible to observe  TODO sperare che funzioni
+With this experiment it is possible to observe how task migration influence miss rate of the application. In the following graphics are showed results of 
+the experiment. Miss rate on LLC is analyzed only for buffer dimension greater or equal to 32KB, because with buffer dimension less than 32KB, read and 
+write accesses to LLC are very different between case with all task pinned and case with only waves pinned and, for this reason, miss rates are not longer 
+comparable.
 
-TODO vale la pena farlo su tutti e tre?
+TODO L1 and access LLC in Xeon
 
-TODO sta frase non so se buttarla, In our case warm up of cache shouldn't occurs because a mixer migrates always among the same cpus.
+On Intel Xeon, migration pattern increase in particular L1 write miss, $~ 50\%$. The increment of L1 write miss, cause an increment of write 
+access to LLC ($~ 37\%$). Regarding LLC miss rate, we can see that migration pattern increase both LLC read misses by $~52\%$ and write misses by $~45\%$. 
 
-%-----------------------------------------------------------------------------
-\subsection{Cache misses}
+TODO L1 and access LLC i7
 
-TODO menata dello Xeon ma solo per la L2 dicendo che per i banchdi divisi ci sar\'a sempre un miss da parte dei mixer ecc..
-
-TODO dire come a 32KB la cache non conti niente
-
-
-TODO dire che si deve migliorare la varianza
-TODO capire chi migliora la varianza cache miss overhead migration (experiment cpuaffinity e task-affinity normale)
-TODO profiler push e pull, dire che anche loro hanno importanza
-TODO queste cose vanno qui perch\'e 
-
-
-TODO i cache miss e le varianze
+On Intel i7, migration pattern increases in particular L1 read miss rate, $~27\%$ and consequently the read accesses to LLC, $~ 24\%$. Regarding LLC 
+miss rate, we can see that read miss rate increase by $~ 44\%$ and write misses by $~10\%$
 
 %-----------------------------------------------------------------------------
 \subsection{profile push pull}
@@ -352,6 +360,25 @@ TODO test per tutti e per le diverse dimensioni
 
 
 
+\begin{description}
+
+\item[Inter-chip communication:] Inter-chip communication are different, Intel i7 use the new Quick-path Interconnect that is a point-to-point processor 
+interconnect developed by Intel to compete with HyperTransport. This first implementation of this bus achieve 25.6 GB/s, which provides exactly double the 
+theoretical bandwidth of Intel's 1600 MHz FSB, that is the best performance obtainable with FSB. From datasheet, Intel Xeon E5440 use a FSB at 1333 MHz.
+Therefore communication between chips are more faster on i7.
+
+\item[Cache architectures:] Intel i7 uses three cache level and the LLC is shared among all processors, while Intel Xeon use two separated cache 
+blocks and each block is shared among only two cpus, that is cpus on the same dies.
+\end{description}
+
+According these facts, it is clear that communication between cores that belong to different dies is very expensive on Intel Xeon. This fact could explain 
+because execution time of mixer2 differs so much from execution time of other mixers on Intel Xeon. On Xeon, mixer0 or mixer1 could find one buffer 
+in L1 cache and other buffer in a bank of L2 that is shared by the cpu that have execute it. Mixer2 could find one buffer on L1 one cache, while 
+other buffer is \textit{always} placed on bank of L2 that is not shared by the cpu that has executed Mixer2, therefore read latencies are very high. 
+On i7, instead, mixer2 could find one buffer in L1 cache and other buffer in L3 cache that is shared among all cores, therefore to read two buffers is 
+less expensive on i7.
+
+\newpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Task-affinity improvements}
