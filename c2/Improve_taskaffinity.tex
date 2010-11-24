@@ -1,5 +1,10 @@
-In this chapter, we will try to understand why current version of task-affinity is not effective on Intel Xeon, and which are the points of task-affinity 
-logic that can be optimized in order to improve throughput and predictability of the application.
+In this chapter, we analize the behaviors of the current TaskAffinity
+implementation considering different architectures and benchmarks.  This
+analysis is two fold: on one side it allows to understand why the current
+task-affinity implementation is not effective on some architectures, e.g. the
+Intel Xeon, on the other which are the points of task-affinity logic that can be
+optimized in order to improve an application \emph{throughput and
+predictability}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Scheduler architecture on 2.6.34}
@@ -12,29 +17,32 @@ carried out from 2.6.31 kernel version to 2.6.34.
 \subsection{Task wake up management}
 
 The scheduling procedure for a task starts when it wakes up. A task can wake up
-for different reasons, i.e. a semaphore becomes unlocked, task's creation
-(in that case it has the first wake up), etc.. In all those cases different
-kernel functions are called, but at the end they call 
-\texttt{try\_to\_wake\_up} function. The API of \texttt{try\_to\_wake\_up} is:
+for different reasons, i.e. a semaphore becomes unlocked or a new task creation.  In all those cases different
+kernel functions are called, but at the end they call the
+\texttt{try\_to\_wake\_up} function:
 
 \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single, label=lis:APIttwu}
 \lstinputlisting{API_ttwu.c}
 
-Where $p$ is the to be waken task, other input parameters are not important now.
+where $p$ is the to be waken task.
 This function follows these steps:
 
 \begin{enumerate}
 \item Disables kernel preemption, locks the runqueue where $p$ was last executed and check 
-if $p$ is not already waken and if it is not already on a runqueue. In the first case the 
+if $p$ is not already waken and it is not already on a runqueue. In the first case the 
 function releases lock and exit, in the second case the function check if a
 \textit{push} is necessary, further details about these if statements will be
-describe soon. If two checks fail, $p$'s state is changed in TASK\_WAKING, the
+describe thereafter. If two checks fail, $p$'s state is changed in TASK\_WAKING, the
 lock on runqueue is released and \texttt{select\_task\_rq}, a wrapper for a 
 class-specific \texttt{select\_task\_rq\_rt}, is called. The function 
 \texttt{task\_waking} at line 2420 is class-specific and regards only Fair tasks.
 
-\lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
-\lstinputlisting{ttwu_steps.c}
+\begin{figure}[h]
+  \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
+  \lstinputlisting{ttwu_steps.c}
+  \label{code:ttwu}
+  \caption{A portion of the \texttt{try\_to\_wake\_up} method}
+\end{figure}
 
 \item \texttt{select\_task\_rq\_rt} choose on which cpu $p$ will be executed. It
 calls \texttt{find\_lowest\_rq} that returns the best cpu where to put $p$. Criteria
@@ -47,29 +55,45 @@ if selected cpu is online, in that case returns, otherwise calls
 \texttt{select\_fallback\_rq} that returns an any online cpu that "respects" 
 $p$'s cpuaffinity.
 
-\lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
-\lstinputlisting{select_task.c}
+\begin{figure}[h]
+  \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
+  \lstinputlisting{select_task.c}
+  \label{code:ttwu}
+  \caption{A portion of the \texttt{???} method}
+\end{figure}
 
 \item acquires the lock on selected runqueue, updates some $p$'s statistics, enqueues 
 $p$ on selected runqueue and call \texttt{check\_preempt\_rq} 
 
-\lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
-\lstinputlisting{ttwu_check.c}
+\begin{figure}[h]
+  \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
+  \lstinputlisting{ttwu_check.c}
+  \label{code:ttwu}
+  \caption{A portion of the \texttt{???} method}
+\end{figure}
 
 \item checks if $p$ has priority greater than priority of the task currently
 executed on selected runqueue, in that case it calls \texttt{need\_resched}
 function in order to perform the context-switch on selected runqueue at the
 end of \texttt{try\_to\_wake\_up}.
 
-\lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
-\lstinputlisting{check_prio.c}
+\begin{figure}[h]
+  \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
+  \lstinputlisting{check_prio.c}
+  \label{code:ttwu}
+  \caption{A portion of the \texttt{???} method}
+\end{figure}
 
 \item update $p$'s state in TASK\_RUNNING and call class-specific function 
 \texttt{task\_woken} to check if $p$ must be pushed from the selected runqueue.
 \texttt{task\_woken} has effects only for Real-time tasks.
 
-\lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
-\lstinputlisting{final_ttwu.c}
+\begin{figure}[h]
+  \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
+  \lstinputlisting{final_ttwu.c}
+  \label{code:ttwu}
+  \caption{A portion of the \texttt{???} method}
+\end{figure}
 
 \end{enumerate}
 
@@ -78,10 +102,14 @@ The most important differences from version 2.6.31 related to Real-time tasks re
 It is possible to have multiple istances of \texttt{try\_to\_wake\_up} for the same task executed simultaneously. In the 2.6.31 kernel version, this problem
 is resolved by holding runqueue lock. In the 2.6.34 kernel version, to deal with this issue a new task's state named TASK\_WAKING was introduced. 
 
-\lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
-\lstinputlisting{state_list.c}
+\begin{figure}[h]
+  \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
+  \lstinputlisting{state_list.c}
+  \label{code:ttwu}
+  \caption{A portion of the \texttt{???} method}
+\end{figure}
 
-TASK\_WAKING is used to indicate someone is already waking the task, in this way other istances of \texttt{try\_to\_wake\_up} fails when executes the if 
+TASK\_WAKING is used to indicate someone is already waking the task, in this way other instances of \texttt{try\_to\_wake\_up} fails when executes the if 
 statement at line TODO ref of \texttt{try\_to\_wake\_up}, because input parameter $state$ of \texttt{try\_to\_wake\_up} is in the most cases equal to 
 TASK\_ALL and then, according to fig TODO stati, \texttt{TASK\_WAKING \& TASK\_ALL} return 0 and \texttt{try\_to\_wake\_up} exits. With this solution 
 it is possible reduce time in which lock on runqueue is held. 
@@ -111,8 +139,12 @@ modified by a parallel scheduling operation on another CPU). If not, the search 
 In order to decide which tasks must be pushed, a linked list named \textit{pushable\_list} is added to each runqueue. \texttt{push\_rt\_task()} selects tasks
 to push from this list. A task is inserted in this list when it is enqueued on a runqueue as show in the snippet below.
 
-\lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single, label=lis:steps}
-\lstinputlisting{enqueue_push.c}
+\begin{figure}[h]
+  \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single, label=lis:steps}
+  \lstinputlisting{enqueue_push.c}
+  \label{code:ttwu}
+  \caption{A portion of the \texttt{???} method}
+\end{figure}
 
 The current task of any runqueue can't never be in a pushable list, in fact, during a context switch the next task to be executed is removed from the 
 runqueue's pushable list.
@@ -151,7 +183,13 @@ It has one L3 of 8MB, which is shared by all cores. The L2-caches are private to
 
 \end{description}
 
-Benchmark used is the same used in \cite{lcs}, in Fig.\ref{fig:bench} is represented its structure
+Benchmark used is the same used in \cite{lcs}, in Fig.\ref{fig:bench} is
+represented its structure.\begin{figure}[h]
+
+  \label{code:ttwu}
+  \caption{A portion of the \texttt{???} method}
+\end{figure}
+
 
 \begin{figure}[htbp]
 \centering
@@ -182,7 +220,8 @@ metric is possible measure throughput and predictability of the application.
 This section analyzes which are the improvements and worsening that current version of task-affinity involves on different test computers at the buffer 
 dimension change.
 
-In the following experiment only Intel Xeon and Intel i7 are considered, because cache architectures of Intel i7 and AMD have the same structure.
+In the following experiments only the Intel Xeon and Intel i7 architectures are
+considered, because their cache architectures are similar in structure.
 These architectures differ in inter-chip communication, the former uses Quick-path Interconnect (QPI) the latter use Hyper-transport TODO freq bus. 
 Furthermore, Intel i7 use an inclusive LLC with MESIF protocol, while AMD use an exclusive LLC with MOESI protocol. To observe how these factors impact 
 on task-affinity a complex analysis is required and it is not the goal of this thesis. Cache architectures of Intel Xeon and Intel i7 are greatly 
