@@ -1,4 +1,4 @@
-In this chapter, we analize the behaviors of the current TaskAffinity
+In this chapter, we analize the behaviors of the current Task affinity
 implementation considering different architectures and benchmarks.  This
 analysis is two fold: on one side it allows to understand why the current
 task-affinity implementation is not effective on some architectures, e.g. the
@@ -40,7 +40,7 @@ class-specific \texttt{select\_task\_rq\_rt}, is called. The function
 \begin{figure}[h]
   \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
   \lstinputlisting{ttwu_steps.c}
-  \label{code:ttwu}
+  \label{code:steps_ttwu}
   \caption{A portion of the \texttt{try\_to\_wake\_up} method}
 \end{figure}
 
@@ -58,18 +58,18 @@ $p$'s cpuaffinity.
 \begin{figure}[h]
   \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
   \lstinputlisting{select_task.c}
-  \label{code:ttwu}
-  \caption{A portion of the \texttt{???} method}
+  \label{code:select_task}
+  \caption{A portion of the \texttt{select\_task\_rq} method}
 \end{figure}
 
 \item acquires the lock on selected runqueue, updates some $p$'s statistics, enqueues 
-$p$ on selected runqueue and call \texttt{check\_preempt\_rq} 
+$p$ on selected runqueue and call \texttt{check\_preempt\_rq\_rt} 
 
 \begin{figure}[h]
   \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
   \lstinputlisting{ttwu_check.c}
-  \label{code:ttwu}
-  \caption{A portion of the \texttt{???} method}
+  \label{code:check_preempt}
+  \caption{A portion of the \texttt{try\_to\_wake\_up} method}
 \end{figure}
 
 \item checks if $p$ has priority greater than priority of the task currently
@@ -80,8 +80,8 @@ end of \texttt{try\_to\_wake\_up}.
 \begin{figure}[h]
   \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
   \lstinputlisting{check_prio.c}
-  \label{code:ttwu}
-  \caption{A portion of the \texttt{???} method}
+  \label{code:prio_ttwu}
+  \caption{A portion of the \texttt{check\_preempt\_curr} method}
 \end{figure}
 
 \item update $p$'s state in TASK\_RUNNING and call class-specific function 
@@ -91,8 +91,8 @@ end of \texttt{try\_to\_wake\_up}.
 \begin{figure}[h]
   \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
   \lstinputlisting{final_ttwu.c}
-  \label{code:ttwu}
-  \caption{A portion of the \texttt{???} method}
+  \label{code:final_ttwu}
+  \caption{A portion of the \texttt{try\_to\_wake\_up} method}
 \end{figure}
 
 \end{enumerate}
@@ -105,15 +105,14 @@ is resolved by holding runqueue lock. In the 2.6.34 kernel version, to deal with
 \begin{figure}[h]
   \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
   \lstinputlisting{state_list.c}
-  \label{code:ttwu}
-  \caption{A portion of the \texttt{???} method}
+  \label{code:task_states}
+  \caption{Task's states}
 \end{figure}
 
 TASK\_WAKING is used to indicate someone is already waking the task, in this way other instances of \texttt{try\_to\_wake\_up} fails when executes the if 
-statement at line TODO ref of \texttt{try\_to\_wake\_up}, because input parameter $state$ of \texttt{try\_to\_wake\_up} is in the most cases equal to 
-TASK\_ALL and then, according to fig TODO stati, \texttt{TASK\_WAKING \& TASK\_ALL} return 0 and \texttt{try\_to\_wake\_up} exits. With this solution 
-it is possible reduce time in which lock on runqueue is held. 
-
+statement at line 2396 of the \texttt{try\_to\_wake\_up}, Fig. \ref{code:steps_ttwu}, because input parameter $state$ of \texttt{try\_to\_wake\_up} is in the 
+most cases equal to TASK\_ALL and then, according to Fig. \ref{code:task_states}, \texttt{TASK\_WAKING \& TASK\_ALL} return 0 and 
+\texttt{try\_to\_wake\_up} exits. With this solution it is possible reduce time in which lock on runqueue is held. 
 
 %-----------------------------------------------------------------------------
 \subsection{Migration policy}
@@ -143,7 +142,7 @@ to push from this list. A task is inserted in this list when it is enqueued on a
   \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single, label=lis:steps}
   \lstinputlisting{enqueue_push.c}
   \label{code:ttwu}
-  \caption{A portion of the \texttt{???} method}
+  \caption{A portion of the \texttt{enqueue\_task\_rt} method}
 \end{figure}
 
 The current task of any runqueue can't never be in a pushable list, in fact, during a context switch the next task to be executed is removed from the 
@@ -183,13 +182,7 @@ It has one L3 of 8MB, which is shared by all cores. The L2-caches are private to
 
 \end{description}
 
-Benchmark used is the same used in \cite{lcs}, in Fig.\ref{fig:bench} is
-represented its structure.\begin{figure}[h]
-
-  \label{code:ttwu}
-  \caption{A portion of the \texttt{???} method}
-\end{figure}
-
+Benchmark used is the same used in \cite{lcs}, in Fig.\ref{fig:bench} is represented its structure.
 
 \begin{figure}[htbp]
 \centering
@@ -210,9 +203,14 @@ by wave0 and from buffer filled by wave1, mix data and then write its buffer.
 When mixer2 has finished to write data on its buffer, we say that a \textit{sample} was produced. The execution time to produce a sample depends on buffer 
 dimension, because each task has to fill its buffer. Note that waves fill their buffer with integer of 2 byte, therefore if buffer is of 4KB they will
 write 2048 integers in their buffer. Buffer dimension is always a power of 2.
-The metric used to evaluate benchmark performance is the same used in \cite{lcs}: $average + 2*standard deviation$ (A2S), where \textit{average} is the 
-average of execution time to produce a sample and \textit{standard deviation} is the standard deviation of execution time to produce a sample. With this 
-metric is possible measure throughput and predictability of the application.
+The metric used to evaluate benchmark performance is the same used in \cite{lcs}: 
+\begin{equation}
+	average + 2*standard deviation (A2S), 
+\label{eq:metric_rt}
+\end{equation}
+
+where \textit{average} is the average of execution time to produce a sample and \textit{standard deviation} is the standard deviation of execution time to 
+produce a sample. With this metric is possible measure throughput and predictability of the application.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Analysis of Taskaffinity behaviour}
@@ -220,13 +218,16 @@ metric is possible measure throughput and predictability of the application.
 This section analyzes which are the improvements and worsening that current version of task-affinity involves on different test computers at the buffer 
 dimension change.
 
-In the following experiments only the Intel Xeon and Intel i7 architectures are
-considered, because their cache architectures are similar in structure.
-These architectures differ in inter-chip communication, the former uses Quick-path Interconnect (QPI) the latter use Hyper-transport TODO freq bus. 
+In the following experiments only the Intel Xeon and Intel i7 architectures are considered, because their cache architectures are similar in structure.
+These architectures differ in inter-chip communication, the former uses Quick-path Interconnect (QPI) the latter use Hyper-transport (HT). 
 Furthermore, Intel i7 use an inclusive LLC with MESIF protocol, while AMD use an exclusive LLC with MOESI protocol. To observe how these factors impact 
-on task-affinity a complex analysis is required and it is not the goal of this thesis. Cache architectures of Intel Xeon and Intel i7 are greatly 
-different, furthermore, also in this case, technologies used for inter-chip communication are different, therefore these processor are suitable to show 
-impact of cache architecture on task-affinity.
+on task-affinity a complex analysis is required and it is not the goal of this thesis. Furthermore, AMD uses a different policy from that used by Intel i7
+to measure L1 and LLC cache misses, in fact AMD doesn't allow to measure read and write misses separately: there is an unique event that allows to measure 
+the sum of L1 write and read misses. The same goes for LLC cache misses, also in that case it possible measure only the sum of LLC write and read misses.
+Since we have the need to measure write and read misses separately, AMD is not suitable to analyze task-affinity.
+
+Cache architectures of Intel Xeon and Intel i7 are greatly different, furthermore, also in this case, technologies used for inter-chip communication are 
+different, therefore these processor are suitable to show impact of cache architecture on task-affinity.
 
 %-----------------------------------------------------------------------------
 \subsection{Application's performance}
@@ -256,7 +257,8 @@ of task-affinity in terms of predictability and throughput on different architec
 \begin{center}
 \begin{tabular}{l|c|c|c}
 	\hline
-	& Xeon (Speedup) & i7 (Speedup) \\ \hline
+	& Speedup \\ \hline
+	& Xeon & i7 \\ \hline
 	$4KB$  & -1.89\% & 2.33\% \\ \hline
 	$8KB$  & -0.82\% & 6.42\% \\ \hline
 	$16KB$ & -0.31\% & 8.42\% \\ \hline
@@ -274,6 +276,8 @@ Speedup on Table \ref{tab:speedup_xeon_i7} is calculated in this way:
         \frac{A2S_{task\_affinity} - A2S_{vanilla}}{A2S_{vanilla}}
 \label{eq:miss_rate}
 \end{equation}
+
+Where $A2S_{task\_affinity}$ and $A2S_{vanilla}$ are calculated using \ref{eq:metric_rt}.
 
 As shown in graphics and as summarized in Table \ref{tab:speedup_xeon_i7}, current version of task-affinity is not effective on Intel Xeon.
 In term of throughput task-affinity is not better than vanilla, because the average of execution time of a sample is about the same in both kernels and this
