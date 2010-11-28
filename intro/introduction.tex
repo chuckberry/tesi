@@ -68,7 +68,7 @@ allocate objects and it assigned a task to a CPU that contained objects referenc
 is a problem that involves all aspect of software engineering, from the compiler to scheduler and memory management system.
 
 Interesting research activities made in recent years exploit another strategy. They don't introduce new programming language or sophisticated runtime 
-environment, but they implement a raw profiler that, at runtime, it tries to understand how much cache space a task requires, in order to infer which 
+environment, but they implement a raw profiler that, at runtime, it infers how much cache space a task requires, in order to infer which 
 tasks could cause cache trashing if they would be executed concurrently.
 To make this job, the profiler executes a periodical tuning phase in which it analyzes miss rate of each task, in this way it is possible understand the 
 amount of space used by a task. According to these informations, two or more

@@ -1,3 +1,5 @@
+TODO controlla quanto sono diversi gli accessi sull\'i7 a 32 e 64
+
 In this chapter, we analize the behaviors of the current Task affinity
 implementation considering different architectures and benchmarks.  This
 analysis is two fold: on one side it allows to understand why the current
@@ -110,8 +112,8 @@ is resolved by holding runqueue lock. In the 2.6.34 kernel version, to deal with
 \end{figure}
 
 TASK\_WAKING is used to indicate someone is already waking the task, in this way other instances of \texttt{try\_to\_wake\_up} fails when executes the if 
-statement at line 2396 of the \texttt{try\_to\_wake\_up}, Fig. \ref{code:steps_ttwu}, because input parameter $state$ of \texttt{try\_to\_wake\_up} is in the 
-most cases equal to TASK\_ALL and then, according to Fig. \ref{code:task_states}, \texttt{TASK\_WAKING \& TASK\_ALL} return 0 and 
+statement at line 2396 of the \texttt{try\_to\_wake\_up}, Fig. \ref{code:steps_ttwu}, because input parameter $state$ of \texttt{try\_to\_wake\_up} is in 
+the most cases equal to TASK\_ALL and then, according to Fig. \ref{code:task_states}, \texttt{TASK\_WAKING \& TASK\_ALL} return 0 and 
 \texttt{try\_to\_wake\_up} exits. With this solution it is possible reduce time in which lock on runqueue is held. 
 
 %-----------------------------------------------------------------------------
@@ -282,13 +284,8 @@ Where $A2S_{task\_affinity}$ and $A2S_{vanilla}$ are calculated using \ref{eq:me
 As shown in graphics and as summarized in Table \ref{tab:speedup_xeon_i7}, current version of task-affinity is not effective on Intel Xeon.
 In term of throughput task-affinity is not better than vanilla, because the average of execution time of a sample is about the same in both kernels and this
 is true for both the architectures. In term of predictability, on Intel i7, task-affinity is better than vanilla, especially with buffer greater than 32KB.
-Task-affinity should improve predictability of application, why does this fact doesn't happen, on Xeon?
-
-%-----------------------------------------------------------------------------
-\subsection{Migration issues and cache misses}
-
-Cache misses are an important factor that influence predictability of an application. The following graphics visualize cache misses obtained on Intel 
-Xeon and on Intel i7.
+Task-affinity should reduce both L1 and LLC cache misses and, consequently, improve predictability of application. But this fact doesn't occur on Intel 
+Xeon. In Fig. \ref{fig:l1_load_store_Xeon} and \ref{fig:l1_load_store_i7} we can see respectively L1 read and write misses on Xeon and i7.
 
 \begin{figure}[htbp]
  \centering
@@ -300,23 +297,27 @@ Xeon and on Intel i7.
 \begin{figure}[htbp]
  \centering
   \includegraphics[width=\widefigure]{images/cache_miss/l1_load_store_i7.eps}
-  \label{fig:l1_load_store_Xeon}
+  \label{fig:l1_load_store_i7}
  \caption{\figurecaption{percentage of read and write misses on i7}}
 \end{figure}
 
-As we can see, task-affinity doesn't reduce miss rate on Xeon. An important factor that influence cache miss is migration of tasks. Unfortunately, current 
-version of task-affinity is not very effective in term of reduction of task's migrations. As already described in \cite{lcs}, during the benchmark's 
-execution, \textit{mixer0} or \textit{mixer1} bounce from two different cpus. This problem is not related to the architecture or buffer dimension, it is 
-an issue related to the logic of task-affinity. To understand the reason of this problem see Fig. \ref{fig:migr_pat}. 
+TODO come era prevedibile, on Intel Xeon read and write miss rates are increased and, consequently, predictability is degradated.
 
-\begin{figure}[htbp]
+%-----------------------------------------------------------------------------
+\subsection{Impact of task migration on execution time predictability}
+
+Migration of tasks is an important factor that influence cache misses. Current version of task-affinity is not very effective in term of reduction of 
+task's migrations. As already described in \cite{lcs}, during the benchmark's execution, \textit{mixer0} or \textit{mixer1} bounce from two different CPUs. 
+This issue is not related to the architecture or buffer dimension, but it is related to the logic of task-affinity. To understand the reason of this 
+problem see Fig. \ref{fig:migr_pat}.
+
+\begin{figure}[h]
 \centering
 \includegraphics[width=\widefigure]{images/migr_i7.eps}
 \caption{\figurecaption{Step A: mixer0 chooses cpu4. Step B: mixer2 chooses cpu4. Step C: mixer0 chooses cpu2}}
 \label{fig:migr_pat}
 \end{figure}
 
-\newpage
 Consider step A. According to task-affinty logic, \textit{mixer0} has to choose a cpu that have executed \textit{wave0} or \textit{wave1}, that is
 CPU2 or CPU4, \textit{mixer2} has to choose a cpu that have executed \textit{mixer0} or \textit{mixer1}, that is CPU3 or CPU1. \textit{mixer0} chooses the 
 least loaded runqeue, therefore it chooses CPU4. At Step B \textit{mixer2} can choose between CPU4 or CPU1, they have the same number of Real-time task, 
@@ -327,11 +328,9 @@ as in step A, because it is still occupied by \textit{mixer2}, so \textit{mixer0
 Task's migration can degrade performance because a migrated task could warm up a new cache and it could create new cache interference in a new location 
 already occupied by other tasks. In order to measure how much this migration pattern increase miss rate of the application, this experiment is performed: 
 two run of benchmark are performed, in the first run all tasks are pinned on a specific cpu and they can't mirgate, in the second run only waves are pinned
-and mixers can migrate, Tab.\ref{tab:assignment} summarize cpu assignment. With this experiment it is possible to observe how task migration influences 
-miss rate of the application.
-\newpage
+and mixers can migrate, Tab.\ref{tab:assignment} summarize cpu assignment. 
 
-\begin{table}[htbp]
+\begin{table}[tbp]
 \centering%
 \subfigure[All task pinned]{%
  \begin{tabular}{c|c}
@@ -362,9 +361,10 @@ miss rate of the application.
 \caption{cpu assignment performed}
 \end{table}
 
-In the following graphics are showed results of the experiment. Miss rate on LLC is analyzed only for buffer dimension greater or equal to 32KB, because 
-with buffer dimension less than 32KB, read and write accesses to LLC are very different between cases with all task pinned and case with only waves pinned 
-and, for this reason, miss rates are not longer comparable.
+What we expect with all tasks pinned and with buffer less than 32KB is a decrease of L1 read and write miss rates and a reduction of accesses to LLC. With 
+buffer greater than 32KB, we don't know effect on L1 miss rates, because buffers can't be loaded entirely in L1 cache, anyway LLC miss rates should 
+diminish. With buffer less than 32KB, accesses to LLC are very different between cases with all task pinned and case with only waves pinned and, then, miss 
+rates that occur in two cases are not longer comparable. For this reason, graphics that represent LLC miss rates show miss rates only for 32KB and 64KB.
 
 \begin{figure}[htbp]
 \centering
@@ -372,7 +372,7 @@ and, for this reason, miss rates are not longer comparable.
 \caption{\figurecaption{percentage of L1 read and write misses on Xeon}}
 \label{fig:cpuaff_l1_load_store_xeon}
 \end{figure}
-\newpage
+
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/cpuaff/cpuaff_acc_l2_load_store_Xeon.eps}
@@ -386,45 +386,48 @@ and, for this reason, miss rates are not longer comparable.
 \caption{\figurecaption{number of LLC read and write accesses on Xeon}}
 \label{fig:cpuaff_l2_load_store_xeon}
 \end{figure}
-
-On Intel Xeon, migration pattern increase in particular L1 write miss. The increment of L1 write miss, cause an increment of write 
-access to LLC. Regarding LLC miss rate, we can see that migration pattern increase both LLC read misses and write misses. 
 \newpage
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/cpuaff/cpuaff_l1_load_store_i7.eps}
 \caption{\figurecaption{percentage of L1 read miss on i7}}
-\label{fig:cpuaff_l1_load_xeon}
+\label{fig:cpuaff_l1_load_i7}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/cpuaff/cpuaff_acc_l3_load_store_i7.eps}
-\caption{\figurecaption{number of LLC read and write accesses on Xeon}}
-\label{fig:cpuaff_acc_l2_load_store_xeon}
+\caption{\figurecaption{number of LLC read and write accesses on i7}}
+\label{fig:cpuaff_acc_l2_load_store_i7}
 \end{figure}
 
-\begin{figure}[]
+\begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/cpuaff/cpuaff_l3_load_store_i7.eps}
 \caption{\figurecaption{percentage of LLC read miss on i7}}
-\label{fig:cpuaff_l1_load_xeon}
+\label{fig:cpuaff_l1_load_i7}
 \end{figure}
-\newpage
-
-On Intel i7, migration pattern increases in particular L1 read miss rate, and consequently the read accesses to LLC. Regarding LLC 
-miss rate, we can see that read and write misses rate are increased.
-
-We can infer from these graphics, that migration pattern have a great influence on read/write miss rate on LLC in both architectures considered. On Intel 
-Xeon, as might be expected, L1 write misses are greatly increased, because if a mixer bounce from one cpu to another at each sample, it will hardly 
-find its private buffer in a L1 cache, therefore it will have to warm up cache at each migration creating possible inter-thread interference.
-
-On Intel i7, instead, write misses are not increased a lot. It is clear, that this fact is due to CPU architecture. To get a sense on how much cache miss 
-influence predictability of the application, see Fig. \ref{fig:time_cpf_var_Xeon_i7}. In the graphics two run of benchmark are compared: in the first run 
-all tasks are pinned, while in the second run all tasks can migrate according migration policy of vanilla kernel.
 
 \newpage
+%-----------------------------------------------------------------------
+\subsection{Considerations on experimental results}
+
+We can infer from these graphics, that migration pattern have a great influence on read/write miss rate on LLC in both architectures considered. 
+
+On Intel Xeon, L1 and LLC read and in particular write misses are greatly increased, this fact is due to cache architecture. On Xeon cores are not all on 
+the same die, for example: assume that core 1 and 2 are on the same die, while core 3 and 4 are on the other die. If a task is executed on core 1 and 
+request a data on core 3, that request will result in a miss, therefore if a task bounces from CPUs that own to different dies, each time it has to warm 
+up the cache. This issue regards especially write operations, because for read operations, there is the prefetcher that mitigates this problem.
+
+On Intel i7, instead all core share a common LLC. When a core requires a data, it sends a data request to L3 cache. If data is in L3 and there is a hit, 
+the L3 cache query the "core valid" bits of the cache line that contains requested data, in order to know which is the core that owns requested data. The 
+core that owns requested data reply to the request with the most recent copy of data. For this reason, each core on i7 can use data in other private cache
+because all data are contained in LLC.
+
+To get a sense on how much cache miss influence predictability of the application, see Fig. \ref{fig:time_cpf_var_Xeon_i7}. In the graphics two run of 
+benchmark are compared: in the first run all tasks are pinned, while in the second run all tasks can migrate according migration policy of vanilla kernel.
+
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/cpf_time/time_cpf_var_Xeon_i7.eps}
@@ -432,27 +435,20 @@ all tasks are pinned, while in the second run all tasks can migrate according mi
 \label{fig:time_cpf_var_Xeon_i7}
 \end{figure}
 
-It is clear from the graph that the impact of cache miss on application's predictability is very significant on Intel i7
-Performance degradation on Intel Xeon is not only due to migration pattern. The architectures of Xeon and i7 are very different, in particular for two 
-apsects:
+It is interesting to note how the absence of migration improve the predictability when buffer used are greater than 32KB  that can't be stored in L1 but 
+only in LLC cache.
 
-\begin{description}
-
-\item[Inter-chip communication:] Intel i7 use the new Quick-path Interconnect that is a point-to-point processor interconnect developed by Intel to compete 
-with HyperTransport. This first implementation of this bus achieve 25.6 GB/s, which provides exactly double the theoretical bandwidth of Intel's 1600 MHz 
-FSB, that is the best performance obtainable with FSB. From datasheet, Intel Xeon E5440 use a FSB at 1333 MHz, therefore communication between chips are 
-more faster on i7.
-
-\item[Cache architectures:] Intel i7 uses three cache level and the LLC is inclusive and shared among all processors, while Intel Xeon use two separated 
-cache blocks and each block is shared among only two cpus, that is cpus on the same dies. Thanks to inclusive LLC cache and MESIF protocol, snoop traffic
-is greatly reduced.
-\end{description}
-
-According these facts, it is clear that communication between cores that belong to different dies is very expensive on Intel Xeon. On Intel Xeon, mixer0 
-or mixer1 could find one buffer in L1 cache and other buffer in a bank of L2 that is shared by the cpu that have execute it. Mixer2 could find one buffer 
-on L1 one cache, while other buffer is \textit{always} placed on bank of L2 that is not shared by the cpu that has executed Mixer2, therefore read 
-latencies are very high, because data are placed on different dies. On i7, instead, mixer2 could find one buffer in L1 cache and other buffer in L3 cache 
-that is shared among all cores and it is inclusive, therefore to read data is less expensive on i7.
+Performance degradation on Intel Xeon is not only due to migration pattern. As I said before, cache architectures of Xeon and i7 are very different and
+from previous graphics seems that with cache architecture of Intel i7, task-affinity is more effective, but there is another important aspect that influence
+performace: it is \textbf{Inter-chip communication}. Intel i7 use the new Quick-path Interconnect that is a point-to-point processor interconnect developed 
+by Intel to compete with HyperTransport. This first implementation of this bus achieve 25.6 GB/s, which provides exactly double the theoretical bandwidth 
+of Intel's 1600 MHz FSB, that is the best performance obtainable with FSB. From datasheet, Intel Xeon E5440 use a FSB at 1333 MHz, therefore communication 
+between chips are more faster on i7. Hence, it is clear that communication between cores that belong to different dies is very expensive on Intel Xeon. 
+On Intel Xeon, \textit{mixer0} or \textit{mixer1} could find one buffer in L1 cache and other buffer in a bank of L2 that is shared by the cpu that 
+have execute it. \textit{Mixer2} could find one buffer on L1 one cache, while other buffer is \textit{always} placed on bank of L2 that is not shared 
+by the cpu that has executed \textit{Mixer2}, therefore read latencies are very high, because data are placed on different dies. 
+On i7, instead, \textit{mixer2} could find one buffer in L1 cache and other buffer in L3 cache that is shared among all cores and it is inclusive, 
+therefore to read data is less expensive on i7.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Task-affinity improvements}
@@ -526,18 +522,22 @@ task-affinity data structures.
 %-----------------------------------------------------------------------------
 \subsection{Temporal locality}
 
-To ensure that a consumer will be the next executed task after a producer, it is necessary to change what \texttt{select\_task\_rq\_rt} "see". As I 
-previously said, during its loop, \texttt{select\_task\_rq\_rt} check for cpu that \textbf{have executed} a task in $p$'s \textit{taskaffinity list}. 
-It means that, in that moment, those cpus could be executing a task that it is not a producer and then, L1 cache could be already dirty. For this reason, 
-at each runqueue was added a field named \texttt{last\_tsk} that contains the last task executed in a runqueue. This field is updated at each context switch 
-if the next task to be executed is different from idle. In this way, if current task on runqueue is not idle, this field represents, the task in execution. 
+The implemented logic to improve temporal locality is divided in the following parts:
 
-With this additional field, \texttt{select\_task\_rq\_rt} "knows" which is the task currently executed on each runqueue. In this way, cpus that during 
-\texttt{select\_task\_rq\_rt} are executing a task that is not in $p$'s \textit{taskaffinity list} are not inserted in \texttt{affinity\_mask}.
+\begin{description}
 
-This change is not enough. Consider this situation: two different cpus that we call CPU\_A and CPU\_B are executing two different istances of 
-\texttt{try\_to\_wake\_up}. Respectively, they are called for task $p$ and task $q$: the former has task-affinity relationship, the latter is a generic 
-Real-time task, both tasks have the same priority. Suppose that the current task on CPU\_A is a task in $p$'s \textit{taskaffinity list} and then 
+\item[last\_tsk field] To ensure that a consumer will be the next executed task after a producer, it is necessary to change what 
+\texttt{select\_task\_rq\_rt} "see". As I previously said, during its loop, \texttt{select\_task\_rq\_rt} check for cpu that \textbf{have executed} a 
+task in $p$'s \textit{taskaffinity list}. It means that, in that moment, those cpus could be executing a task that it is not a producer and then, L1 cache 
+could be already dirty. For this reason, at each runqueue was added a field named \texttt{last\_tsk} that contains the last task executed in a runqueue. 
+This field is updated at each context switch if the next task to be executed is different from idle. In this way, if current task on runqueue is not idle, 
+this field represents, the task in execution. With this additional field, \texttt{select\_task\_rq\_rt} "knows" which is the task currently executed on 
+each runqueue. In this way, cpus that during \texttt{select\_task\_rq\_rt} are executing a task that is not in $p$'s \textit{taskaffinity list} are not 
+inserted in \texttt{affinity\_mask}.
+
+\item[enqueue on head] This change is not enough. Consider this situation: two different cpus that we call CPU\_A and CPU\_B are executing two different 
+istances of \texttt{try\_to\_wake\_up}. Respectively, they are called for task $p$ and task $q$: the former has task-affinity relationship, the latter is 
+a generic Real-time task, both tasks have the same priority. Suppose that the current task on CPU\_A is a task in $p$'s \textit{taskaffinity list} and then 
 \texttt{select\_task\_rq\_rt} choose CPU\_A for $p$. Suppose that \texttt{try\_to\_wake\_up} that wakes up $q$ chooses CPU\_A and enqueue task $q$ on 
 runqueue of CPU\_A. Task $p$ is not still enqueued, therefore when it will be enqueued, it will be preceeded by $q$ and then the next task that will
 be executed on CPU\_A is $q$.
@@ -549,29 +549,34 @@ be executed on CPU\_A is $q$.
 \label{fig:enq_head}
 \end{figure}
 
-To resolve this problem, I have modified enqueuing of task in this manner: a task that "respects" task-affinity is enqueued on the top of a runqueue and not 
-on tail. 
+To resolve this problem a task that "respects" task-affinity is enqueued on the top of a runqueue and not on tail. In this way, if two Real-time tasks are 
+on the same runqueue and have the same priority, but one of them "respects" task-affinity, the next task that will be executed is the task that "respects" 
+task-affinity. 
 
-In this way, if two Real-time tasks are on the same runqueue and have the same priority, but one of them "respects" task-affinity, the next task that 
-will be executed is the task that "respects" task-affinity. 
+\item[choice of current task] Even if a task with task-affinity is enqueued on head in a runqueue, it will be the next executed task only if it is enqueued 
+before it is executed a task that is already on that runqueue. For this reason, it is necessary to optimize the choice made in \textit{select\_task\_rq\_rt}.
+In \texttt{select\_task\_rq\_rt}, when a task with task-affinity, that we call $p$, has built its \textit{affinity mask}, it checks if in that mask there 
+is the CPU that is executing the \texttt{try\_to\_wake\_up} that are waking up it. If this is true, it means that the current task on that CPU is a 
+producer for $p$ and now on that CPU a \texttt{try\_to\_wake\_up} is in execution, therefore any other task enqueued on that CPU in that moment can't be 
+executed, because during \texttt{try\_to\_wake\_up} kernel preemption is disabled and then, it is necessary wait that \texttt{try\_to\_wake\_up} finish.
+Choosing that CPU, $p$ will be the next task executed on that CPU, because it is enqueued on head and it can precede all task enqueued on that CPU during
+\textit{select\_task\_rq\_rt}.
 
-Until now we have modified the logic present in \texttt{try\_to\_wake\_up}. A carefully reader, will have noted that with this strategy a task with 
-task-affinity can move up a task without task-affinity only if the latter is enqeued \textit{before} the former.
-
+\item[migration mechanism] There is still a problem. It could happen that a task with higher priority is enqueued on the same runqueue where a task with 
+task-affinity is enqueued. In this case, the next task to execute won't be the task with task-affinity.
 To resolve this problem, migration mechanism is used. When the \texttt{try\_to\_wake\_up} has enqueued task $p$, it calls \texttt{task\_woken} in order to
 checks if $p$ can be executed on the selected runqueue or not. If on runqueue there is a task with priority equal or higher than the $p$'s priority and 
 this task precede $p$, \texttt{push\_rt\_task} is called and $p$ can be pushed on another cpu. To select the cpu where to push $p$, the same mechanism used 
 in \texttt{select\_task\_rq\_rt} is adopted. Therefore, $p$ will be pushed where it is in execution a task in $p$'s \textit{taskaffinity list}, if it is 
-impossible standard push criteria are adopted and $p$ will be pushed on a cpu that executing a task with lower priority than $p$. Since now also 
-\texttt{push\_rt\_task} is involved in task-affinity logic, and it use the same mechanism used in \texttt{select\_task\_rq\_rt},  the mechanism used to 
-select taskaff TODO mettere il nome della funzione usata nella patch della find\_lowest. Obviously, in order to push a task that "respect" task-affinity, 
-it is necessary insert it in a \textit{pushable list}. 
+impossible standard push criteria are adopted and $p$ will be pushed on a cpu that executing a task with lower priority than $p$. Obviously, in order to 
+push a task that "respect" task-affinity, it is necessary insert it in a \textit{pushable list}. 
 
+\end{description}
 %-----------------------------------------------------------------------------
 \subsection{Synchronization}
 
 In the current version of task-affinity, accesses to data structures used to manage task-affinity are made by user or by kernel. The resource that must be
-synchronized is \texttt{taskaffinity\_list} TODO del followme non sono sicuro
+synchronized is \texttt{taskaffinity\_list}
 
 \begin{description}
 
