@@ -1,15 +1,61 @@
-In this chapter we draw the conclusions of the thesis work retaking the steps that led us to achieve the results presented in the previous sections.
-We summarise what we realised, highlighting the key points of our work, and we propose possible future developments.
+In this work we have investigated behaviour of task-affinity on different architectures. Task-affinity is based on assumption that, if tasks share a great 
+amount of data and we have an SMP architecture, then occasionally executing them on the first available processors will increase the cache-miss rate. If we 
+move tasks to be executed near to where data was produced, then we spare some cache-misses \cite{lcs}. We have demonstrate that this assumption is not 
+always true. Migrations of tasks play an important role on predictability of the applications. When a task migrates, data could be moved from one cache to 
+another. As we have seen with Intel Xeon and as it is demonstrated in \cite{molka}, this operation may involve high latency that depends on cache 
+architecture and inter-chip communications and other hardware factors. Therefore it is clear that it is not enough to execute tasks that share common data 
+on the same CPUs, but it is necessary guarantee that tasks that share common data find what they need possibly in L1 cache. For this reason, we have 
+improved the concept of temporal locality.
 
-TODO conclusion
-TODO come si vede la task-affinity \'e fortemente dipendente dall\'architettura la patch non va bene per linux perch\'e serve una politica di migration
-TODO pi\'u decente
-
-TODO io la storia di push e pull per lo Xeon la metterei qui
-
-TODO future works:
-TODO profiler dicendo che quello che manca davvero a questo lavoro \'e un modo per calcolare l\'incidenza dei cache miss di un\'applicazione, e fare un 
-TODO profiler 
+The experimental results showed there is an improvement of TODO 
 
 
 
+
+%it may have to warm up cache, as we have seen with Intel Xeon: in that case migrations have a great impact on cache misses and predictability. Furthermore
+%thare are others hardware factors as inter-chip communications that influence predictability
+%
+%TODO commento results
+%
+%TODO commento pull che deve migliorare
+%
+%
+%Migrations of tasks play an important role on predictability of the application 
+%
+% in fact, on Intel Xeon, task-affinity is not particular effective and this fact is due to cache architecture and other hardware details as 
+%inter-chip communications. 
+%
+%We have
+%
+%TODO dire sul problema migration
+%
+%
+
+
+
+%
+%
+%
+%
+%
+%We have seen that cache architecture 
+%
+%In questo lavoro abbiamo migliorato 
+%
+%
+%
+%TODO conclusion
+%TODO come si vede la task-affinity \'e fortemente dipendente dall\'architettura la patch non va bene per linux perch\'e serve una politica di migration
+%TODO pi\'u decente
+%
+%TODO io la storia di push e pull per lo Xeon la metterei qui
+%
+%TODO future works:
+%TODO profiler dicendo che quello che manca davvero a questo lavoro \'e un modo per calcolare l\'incidenza dei cache miss di un\'applicazione, e fare un 
+%TODO profiler 
+%
+%TODO negli obbiettivi:
+%
+%the first goal of this thesis is to investigate how task-affinity behaves on different architectures. questo \'e stato fatto perch\'e as showed in molka
+%le cache scassano il cazzo sono complicate devo dire che la task-aff \'e troppo semplicistica ecc.. ... riempi.. for this reasons it is necessary how taskaffinity 
+%

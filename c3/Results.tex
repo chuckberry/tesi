@@ -1,42 +1,44 @@
-In this chapter I will describe obtained results on each test machine. I will show scheduling executed by task-affinity and effects on cache miss and 
-task migration. 
+In this chapter I will show the behaviour of task-affinity on different architectures. First of all, using \textit{trace}, we will check if expected 
+scheduling is performed, after which we will analyze how optimization proposed influences performance and L1 and LLC miss rate of the application. 
 
-In Fig. TODO they are represented the ideally scheduling that the developed patch and vanilla should perform. I have said "ideally" because, as described 
-in \cite{lcs}, it is impossible to perform this scheduling, because scheduling latency are not equal for each core.
+In Fig. \ref{fig:schedule_taskaff} \ref{fig:schedule_van} they are represented the ideally scheduling that the developed patch and vanilla should perform. 
+I have said "ideally" because, as described in \cite{lcs}, it is impossible to perform these scheduling, because scheduling latency are not equal for each 
+core.
  
-TODO fig schedule
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\widefigure]{images/results_xeon/4KB_results_xeon_taskaff.eps}
+\caption{\figurecaption{Theoretical scheduling performed with task-affinity}}
+\label{fig:schedule_taskaff}
+\end{figure}
 
-In the picture, time is normalized to the duration of one sample, in this way, it is possible express duration of different tasks in relative terms.
-According to experiment performed, on Intel xeon \textit{waves} represent $~40\%$ of the sample, \textit{mixer0} and \textit{mixer1} represent $~60\%$.
-On Intel i7 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\widefigure]{images/results_xeon/4KB_results_xeon_van.eps}
+\caption{\figurecaption{Theoretical scheduling performed with vanilla}}
+\label{fig:schedule_van}
+\end{figure}
 
-As we can see, the scheduling proposed, should significantly improve throughput. To estimate this improvement we use the \textit{amdhal's law} \cite{lcs}:
+For simplicity, in the picture we have assumed that all \textit{mixers} and all \textit{waves} have the same duration and a \textit{mixer} takes twice the 
+time it takes for a \textit{wave}. In the real benchmark, durations of the \textit{waves} are slightly different, durations of the \textit{mixer0} and 
+\textit{mixer1} are slightly different, \textit{mixer2} takes more time than \textit{mixer0} or \textit{mixer1}.
+
+Considering time normalized to the duration of one sample, it is possible express durations of different tasks in relative terms.
+Using relative durations, it is possible estimate the improvement given by task-affinity using the \textit{amdhal's law} \cite{lcs}:
 
 \begin{equation}
-       Speedup = (\frac{P_{1}}{S_{1}} + \frac{P_{2}}{S_{2}} + ... \frac{P_{n}}{S_{n}})^{-1} 
+       Speedup = \left(\frac{P_{1}}{S_{1}} + \frac{P_{2}}{S_{2}} + ... \frac{P_{n}}{S_{n}} \right)^{-1} 
 \label{eq:amdhal}
 \end{equation}
 
 Where $P_{i}$ is the i-th parallelized portion of the program and $S_{i}$ is the correspondent speedup. Furthermore the following constraint must be 
-respected
+respected:
 
 \begin{equation}
-       sum_{i=1}^N P_{i} = 1
+       \sum_{i=1}^N P_{i} = 1
 \label{eq:contr_amdhal}
 \end{equation}
-
-
-
-
-In the proposed scheduling \textit{mixer2} is executed in parallel with waves, therefore during the execution of \textit{waves} and \textit{mixer2} 
-theorical speedup should be \textit{x5}, while in the scheduling performed by vanilla, during the execution of \textit{waves} speedup is $x4$ and during
-the execution of  \textit{mixer2} there is any speedup, because \textit{mixer2} is executed alone.
-
-TODO dirci qualcosa
-
-
-In this chapter I will show the behaviour of task-affinity on different architectures. First of all, using \textit{trace}, we will check if expected 
-scheduling is performed, after which we will analyze how optimization proposed influence performance and L1 and LLC miss rate of the application. 
+\newpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Intel Xeon}
@@ -44,7 +46,7 @@ scheduling is performed, after which we will analyze how optimization proposed i
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/results_xeon/final_xeon.eps}
-\caption{\figurecaption{trace TODO dire che sta a 32KB }}
+\caption{\figurecaption{Scheduling performed by task-affinity on Intel Xeon.}}
 \label{fig:trace_xeon}
 \end{figure}
 
@@ -52,6 +54,24 @@ As we can see in Fig. \ref{fig:trace_xeon}, the scheduling performed is correct.
 parallelism. We see that \textit{mixer0} chooses the best cpu in term of temporal locality, for example: in step A \textit{mixer0} chooses CPU4 and not 
 CPU2, because on CPU2 was executed \textit{wave2}, therefore L1 cache could be dirty, instead on CPU4 the last task executed is \textit{wave1}, therefore 
 L1 cache should be clean. Also in step B, it is possible to note how \textit{mixer0} take care about the last task executed on CPU4 choosing CPU2.
+
+In order to estimate theoretical speedup, we have to determine which is the portion of serial benchmark execution that correspond to each task.
+According to measurement performed, we have seen that the sum of execution times of all \textit{waves} correspond to ~$40\%$, the sum of execution times of 
+\textit{mixer0} and \textit{mixer1} correspond to ~$35\%$, the execution time of \textit{mixer2} corresponds to ~$25\%$. According these values, speedups 
+for task-affinity and vanilla are:
+
+\begin{equation}
+  Speedup_{taskaff} = \left(\frac{0.6}{5} + \frac{0.4}{2} \right)^{-1} = 3.125
+\label{eq:speedup_xeon_taskaff}
+\end{equation}
+
+\begin{equation}
+  Speedup_{vanilla} = \left(\frac{0.35}{4} + \frac{0.4}{2} + \frac{0.25}{1} \right)^{-1} = 1.86
+\label{eq:speedup_xeon_van}
+\end{equation}
+
+
+These are speedups assuming that the executed scheduling would be equal to Fig. \ref{fig:schedule_taskaff} \ref{fig:schedule_van}
 
 \begin{figure}[htbp]
 \centering
@@ -66,14 +86,14 @@ L1 cache should be clean. Also in step B, it is possible to note how \textit{mix
 	\hline
 	& Speedup on Xeon \\ \hline
 	& taskaff & vanilla \\ \hline
-	$4KB$ & 2.45 (3.12) \% & 2.38 (1.82)\% \\ \hline
-	$8KB$ & 2.47 (3.12) \% & 2.22 (1.83)\% \\ \hline
-	$16KB$ & 2.47 (3.14) \% & 2.15 (1.87)\% \\ \hline
-	$32KB$  & 2.51 (3.14) \% & 2.13 (1.9)\% \\ \hline
-	$64KB$  & 2.52 (3.13) \% & 2.09 (1.92)\% \\ \hline
+	$4KB$ & 2.45 & 2.38 \\ \hline
+	$8KB$ & 2.47 & 2.22  \\ \hline
+	$16KB$ & 2.47 & 2.15 \\ \hline
+	$32KB$  & 2.51 & 2.13 \\ \hline
+	$64KB$  & 2.52 & 2.09 \\ \hline
 \end{tabular}
 \label{tab:speedup_xeon_i7}
-\caption{Speedup obtained with task-affinity and with vanilla on Xeon. Values in brackets represent ideal speedup}
+\caption{Speedup obtained with task-affinity and with vanilla on Xeon}
 \end{center}
 \end{table}
 
@@ -98,18 +118,48 @@ L1 cache should be clean. Also in step B, it is possible to note how \textit{mix
 \label{fig:l2_load_store_xeon}
 \end{figure}
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\widefigure]{images/results_xeon/push_xeon.eps}
+\caption{\figurecaption{Average of execution time of a call to push\_rt\_task and number of call to push\_rt\_task on Xeon}}
+\label{fig:push_xeon}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\widefigure]{images/results_xeon/pull_xeon.eps}
+\caption{\figurecaption{Average of execution time of a call to pull\_rt\_task and number of call to pull\_rt\_task on Xeon}}
+\label{fig:pull_xeon}
+\end{figure}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Intel i7}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/results_i7/final_i7.eps}
-\caption{\figurecaption{trace TODO}}
+\caption{\figurecaption{Scheduling performed by task-affinity.}}
 \label{fig:trace_i7}
 \end{figure}
 
 Also in this case, Fig. \ref{fig:trace_i7}, the scheduling performed is correct. We can see how in step A and B mixers choose the correct CPUs according to
 their task-affinity relationships.
+
+Also in this case, we have to determine different percentages. According to measurement performed, we have seen that the sum of execution times of 
+all \textit{waves} correspond to ~$50\%$, the sum of execution times of \textit{mixer0} and \textit{mixer1} correspond to ~$30\%$, the execution time 
+of \textit{mixer2} corresponds to ~$20\%$. According these values, speedups for task-affinity and vanilla are:
+
+\begin{equation}
+  Speedup_{taskaff} = \left(\frac{0.7}{5} + \frac{0.3}{2} \right)^{-1} = 3.44
+\label{eq:speedup_i7_taskaff}
+\end{equation}
+
+\begin{equation}
+  Speedup_{vanilla} = \left(\frac{0.50}{4} + \frac{0.3}{2} + \frac{0.2}{1} \right)^{-1} = 2.1
+\label{eq:speedup_i7_van}
+\end{equation}
+
+Also in this case, These are speedups assuming that the executed scheduling would be equal to Fig. \ref{fig:schedule_taskaff} \ref{fig:schedule_van}
 
 \begin{figure}[htbp]
 \centering
@@ -124,13 +174,13 @@ their task-affinity relationships.
 	\hline
 	& Speedup on i7 \\ \hline
 	& taskaff & vanilla \\ \hline
-	$4KB$ & 2.56 (3.27) \% & 2.28 (2.09)\% \\ \hline
-	$8KB$ & 2.6 (3.33) \% & 2.27 (2.11)\% \\ \hline
-	$16KB$ & 2.6 (3.38) \% & 2.18 (2.13)\% \\ \hline
-	$32KB$  & 2.63 (3.4) \% & 2.24 (2.15)\% \\ \hline
-	$64KB$  & 2.65 (3.48) \% & 2.32 (2.16)\% \\ \hline
+	$4KB$ & 2.56 & 2.28 \\ \hline
+	$8KB$ & 2.6  & 2.27 \\ \hline
+	$16KB$ & 2.6 & 2.18 \\ \hline
+	$32KB$ & 2.63 & 2.24 \\ \hline
+	$64KB$ & 2.65 & 2.32 \\ \hline
 \end{tabular}
-\caption{Speedup obtained with task-affinity and with vanilla on i7. Values in brackets represent ideal speedup}
+\caption{Speedup obtained with task-affinity and with vanilla on i7.}
 \label{tab:speedup_i7}
 \end{center}
 \end{table}
@@ -156,18 +206,32 @@ their task-affinity relationships.
 \label{fig:l2_load_store_i7}
 \end{figure}
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\widefigure]{images/results_i7/push_i7.eps}
+\caption{\figurecaption{Average of execution time of a call to push\_rt\_task and number of call to push\_rt\_task on Xeon}}
+\label{fig:push_i7}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\widefigure]{images/results_i7/pull_i7.eps}
+\caption{\figurecaption{Average of execution time of a call to pull\_rt\_task and number of call to pull\_rt\_task on Xeon}}
+\label{fig:pull_i7}
+\end{figure}
+
 \newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{AMD}
+\section{AMD Opteron}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/results_AMD/final_AMD.eps}
-\caption{\figurecaption{trace TODO}}
+\caption{\figurecaption{Scheduling performed by task-affinity on AMD Opteron}}
 \label{fig:trace_AMD}
 \end{figure}
 
-Unexplainably, task-affinity on this machine doesn't work. We can see in step B that \textit{mixer0} doesn't choose the correct CPU. AMD is a NUMA 
+Unexplainably, task-affinity on this machine doesn't work. We can see in step B that \textit{mixer0} doesn't choose the correct CPU. AMD Opteron has a NUMA 
 architecure and task-affinity patch it is developed for SMP architectures, therefore it could be necessary a revision of code in order to manage also 
 NUMA architectures.
 
@@ -179,57 +243,99 @@ From previous graphics it is possbile to do some considerations:
 \begin{description}
 
 \item[throughput:] In both Intel Xeon and Intel i7, parallelism is improved. We can see in Fig \ref{fig:time_avg_var_xeon} an increment of throughput 
-especially with 32 and 64KB, while at 4KB the increment is not very significant. This happens because, see in Fig. \ref{fig:4KB_xeon_results_van} 
-\ref{fig:4KB_xeon_results_taskaff}, using buffer of 4KB, parallelism performed in vanilla is very similar to parallelism performed in task-affinity.
+especially with 32 and 64KB, while at 4KB the increment is not very significant, in fact speedup with task-affinity is $2.45$ while with vanilla is $2.38$, 
+they differ only by $~ 3\%$. This happens because, see in Fig. \ref{fig:4KB_xeon_results_taskaff} \ref{fig:4KB_xeon_results_van}, using buffer of 4KB, 
+parallelism performed in vanilla is very similar to parallelism performed in task-affinity.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/results_xeon/4KB_results_xeon_taskaff.eps}
-\caption{\figurecaption{trace of benchmark execution on Xeon with buffer of 4KB using taskaffinity}}
+\caption{\figurecaption{trace of benchmark execution on Xeon with buffer of 4KB using task-affinity}}
 \label{fig:4KB_xeon_results_taskaff}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/results_xeon/4KB_results_xeon_van.eps}
-\caption{\figurecaption{trace of benchmark execution on i7 with buffer of 4KB using vanilla}}
+\caption{\figurecaption{trace of benchmark execution on Xeon with buffer of 4KB using vanilla}}
 \label{fig:4KB_xeon_results_van}
 \end{figure}
 
 As regard for speedups, we see that using task-afinity in both Xeon and i7, we have real speedups less than ideal speedups. This fact happens because the 
-real performed scheduling is slightly different from ideal scheduling showed in Fig. TODO and real parallelism of the application is lower than ideal 
-parallelism. Using vanilla, instead, real speedups are greater than ideal speedups, because real scheduling improve parallelism respect ideal scheduling, 
-Fig. TODO. In fact if we see Fig TODO trace 4k we note that there is a fraction of \textit{mixer2} that is executed concurrently with others waves, while in
-ideal scheduling \textit{mixer2} should be executed alone.
+real performed scheduling is slightly different from ideal scheduling showed in Fig. \ref{fig:schedule_taskaff} and real parallelism of the application is 
+lower than ideal parallelism. Using vanilla, instead, real speedups are greater than ideal speedups, because real scheduling improve parallelism respect 
+ideal scheduling, Fig. \ref{fig:schedule_van}. In fact if we see Fig. \ref{fig:4KB_xeon_results_van} we note that there is a fraction of \textit{mixer2} 
+that is executed concurrently with others \textit{waves}, while in ideal scheduling \textit{mixer2} should be executed alone.
 
 \item[migrations:] Number of migration is greatly increased, this is not due to architectural details or different buffer dimensions. This fact happens 
-because, at each sample, \textit{mixer0} and \textit{mixer1} and waves are excuted on the same CPUs. Since in the next sample waves are waken up during the 
-execution of \textit{mixer0} and \textit{mixer1}, they must be scheduled on CPUs different from which that have executed them in the previous sample. 
-For this reason, at each sample, waves are executed on different CPUs and, consequently, also other tasks are executed on different CPUs at each sample.
+because, at each sample, \textit{mixer0} and \textit{mixer1} and \textit{waves} are excuted on the same CPUs. Since in the next sample \textit{waves} are 
+waken up during the execution of \textit{mixer0} and \textit{mixer1}, they must be scheduled on CPUs different from which that have executed them in 
+the previous sample. For this reason, at each sample, waves are executed on different CPUs and, consequently, also other tasks are executed on different 
+CPUs at each sample.
 
 \item[cache misses:] Because of worsening of L1 and LLC cache misses, Fig \ref{fig:l1_load_store_xeon} \ref{fig:l2_load_store_xeon}, on Intel Xeon 
 predictability of the application is degradated Fig. \ref{fig:time_avg_var_xeon}, especially using small buffer dimension such as 4KB or 8KB. LLC miss rate 
 is greatly increased in task-affinity, because, as explained in the previous chapter, a core can access to data that are in caches of its own die, 
 therefore if a task migrates frequently between two different dies, at each migration it will have to warm up LLC cache and a cache miss will occur. The 
 same goes for L1 cache misses, also in that case a migration between CPUs that are in different dies increase L1 miss rates. Nevertheless with dimension 
-greater than 8KB and especially greater than 32KB predictability is improved. This means that miss rates on Intel Xeon doesn't influence significantly 
-predictability of the application. On Intel i7, instead, thanks to inclusive shared LLC, a core can access to data contained in all caches of other cores, 
-consequently, L1 and LLC cache misses are reduced. The diminishing of cache misses impacts significantly on application predictability 
-Fig.\ref{fig:time_avg_var_i7}.
+greater than 8KB and especially greater than 32KB predictability is improved. On Intel i7, instead, thanks to inclusive shared LLC, a core can access to 
+data contained in all caches of other cores, consequently, L1 and LLC cache misses are reduced. The diminishing of cache misses impacts significantly on 
+application predictability Fig.\ref{fig:time_avg_var_i7}.
 
-\item[migration functions:] As we can see from Fig. TODO graf in task-affinity \textit{pull\_rt\_tasks} executes more work than in vanilla. 
+\item[migration functions:] As we can see from Fig. TODO push, in both Xeon and i7, with task-affinity number of call to \texttt{push\_rt\_task} is greatly 
+reduced than vanilla. This fact happens because if a CPU is selected according to task-affinity criteria and the enqeued task with task-affinity is the 
+next to be executed on selected runqueue, \texttt{push\_rt\_task} for that runqueue is denied. Other tasks on that runqeueue that have to migrate will be 
+moved by \texttt{pull\_rt\_task}. Instead, with \textit{pull\_rt\_task} task-affinity is not very effective, in fact, with task-affinity, 
+\textit{pull\_rt\_task} it executes more work than in vanilla.
 
-TODO snippet pull per l\'if e per il ciclo sotto
+\begin{figure}[h]
+  \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
+  \lstinputlisting{pull_task.c}
+  \label{code:pull_task}
+  \caption{A portion of the \texttt{pull\_rt\_task} method}
+\end{figure}
 
-The explanation is simple: at the line TODO in Fig. snipp there is a check for overloading runqueues. If in the system there is any overloading runqueue, 
-\textit{pull\_rt\_tasks} searches which runqueues are overloaded and try to pull task from them. With task-affinity, only 3 waves are executed concurrently 
-and one wave has to wait that \textit{mixer2} finish, therefore at each sample there is an overloaded runqueue in the system. For this reason, when 
-\textit{pull\_rt\_tasks} is called, almost certainly it will enter in loop in order to pull tasks from overloaded runqueue. With vanilla instead, all waves 
-are executed concurrently, therefore there are less probabilities to have overloaded runqueues. It is interesting to note that number of call of 
-\textit{pull\_rt\_tasks} is equal in both task-affinity and vanilla, because \textit{pull\_rt\_tasks} is called at each context-switch, but obviously, in 
-vanilla \textit{pull\_rt\_tasks} will exit at line TODO snip. Overhead of \textit{pull\_rt\_tasks} influences predictability of application especially with
-buffer of 4KB because execution time of each thread is relatively small.
+The explanation is simple: at the line 1559 in Fig. \ref{code:pull_task} there is a check for overloading runqueues. If in the system there is any 
+overloading runqueue, \textit{pull\_rt\_task} searches which runqueues are overloaded and try to pull task from them. With task-affinity, only 3 
+\textit{waves} are executed concurrently and one \textit{wave} has to wait that \textit{mixer2} finish, therefore at each sample there is an overloaded 
+runqueue in the system. For this reason, when \textit{pull\_rt\_task} is called, almost certainly it will enter in loop at line 1562 in order to pull tasks 
+from overloaded runqueue. With vanilla instead, all waves are executed concurrently, therefore there are less probabilities to have overloaded runqueues. 
+It is interesting to note that number of call of \textit{pull\_rt\_task} is equal in both task-affinity and vanilla, because \textit{pull\_rt\_task} 
+is called at each context-switch, but obviously, in vanilla \textit{pull\_rt\_tasks} will exit at line 1560. Overhead of \textit{pull\_rt\_task} 
+influences predictability of application especially with buffer of 4KB because execution time of each thread is relatively small.
 
 \end{description}
 
+In conclusion, to get a sense of how task-affinity improve performance of benchmark, look at table \ref{tab:final_speedup}, where are reported values of 
+metric A2S used to characterize how task-affinity improve throughput and predictability respect vanilla
+
+\begin{table}[tbp]
+\centering%
+\subfigure[ Value of A2S on Xeon ]{%
+\begin{tabular}{l|c|c|c}
+	\hline
+	& taskaff & vanilla & speedups \\ \hline
+	$4KB$ & 76,45 & 68,63 & -- \\ \hline
+	$8KB$ & 100,43 & 104,55 & 4\%\\ \hline
+	$16KB$ & 160,15 & 178,27 & 10\%\\ \hline
+	$32KB$  & 276,84 & 319,85 & 13\%\\ \hline
+	$64KB$  & 519,35 & 610,35 & 15\%\\ \hline
+\end{tabular}
+\label{tab:speedup_xeon}
+}\hspace{4em}
+\subfigure[ Values of A2S on i7 ]{%
+\begin{tabular}{l|c|c|c}
+	\hline
+	& taskaff & vanilla & speedups \\ \hline
+	$4KB$ & 70,47 & 79,91 & 12\%\\ \hline
+	$8KB$ & 118,32 & 148,34 & 20\%\\ \hline
+	$16KB$ & 223,61 & 284,8 & 21\%\\ \hline
+	$32KB$  & 437,76 & 548,08 & 20\%\\ \hline
+	$64KB$  & 868,97 & 987,7 & 12\%\\ \hline
+\end{tabular}
+\label{tab:speedup_i7}
+}
+\label{tab:final_speedup}
+\caption{}
+\end{table}
 

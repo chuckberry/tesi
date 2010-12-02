@@ -32,9 +32,10 @@ by 3x when it runs with apsi and by 9.5x when it runs with art, 7.3x when it run
 Consequently, the IPC is affected differently. It is reduced by 35$\%$ when gzip runs with apsi, but reduced by 63$\%$ when gzip runs with art. 
 Although not shown in the figure, art, apsi, applu, and swim's cache miss per instruction increases less than 15$\%$ when each of them runs with gzip. 
 
-In terms of fairness, gzip's significant slow down can easily result in \textbf{priority reduction}. 
+In terms of fairness, gzip's significant slow down can easily result in \textit{priority reduction}. 
 For example, if gzip has a higher priority than art, for gzip to achieve a higher progress rate, it has to be assigned more than three times the 
-number of time slices compared to that assigned to art. Otherwise, to the end users, gzip may appear to be starved. In terms of throughput,
+number of time slices compared to that assigned to art. Otherwise, to the end users, gzip may appear to be starved. Therefore, even if gzip has higher 
+priority than art, it seems that art run more fast than gzip, it is as if priority of gzip is reduced. In terms of throughput,
 gzip's significant slow down reduces the overall throughput because the utilization of the processor where gzip runs on is also significantly reduced. 
 Furthermore, it is possible that the co-scheduled threads's working sets severely overflow the cache and create a \textit{trashing} condition.
 
@@ -71,7 +72,7 @@ Usually in multicore architecture, there is a private L1 cache for each core, an
 that belong to the same node (NUMA). Shared cache is one of the most critical resources in multicores.
 
 As for all types of shared resources, also for shared cache it's necessary to ensure integrity of the shared data.
-When two or more CPUs operate on a shared variable and one of these CPUs modify the variable, it is necessary that the information regarding
+When two or more CPUs operate on a shared variable and one of these  modify the variable, it is necessary that the information regarding
 this change of value be communicated to the other CPUs. The mean used to communicate these informations is called \textit{coherence protocol}, it defines 
 the rules used to comunicate memory update between different cores. Existing coherence protocols are classified based on the mechanism by which they ensure 
 cache coherence: 
@@ -109,8 +110,8 @@ state of cache line to shared state.
  
 \item Exclusive
 The cache line is present only in the current cache, and it matches main memory. It is possible to read/write lines in this state. A cache that owns
-lines in exclusive state must snoop only all read transactions from all other cache and if it intercepts some read that regards owned cache line, it changes
-the state of that line from exclusive to shared.
+lines in exclusive state must snoop all read and write transactions from all other cache and if it intercepts some read that regards owned cache line, 
+it changes the state of that line from exclusive to shared. 
 
 \item Shared
 Indicates that this cache line may be stored in other caches and it matches the main memory. It is possible read cache line in this state. Writes to a 
