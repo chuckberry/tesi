@@ -81,6 +81,45 @@ furthermore this kind of works was experimented with good outcome also in embedd
 \section{Objectives of this thesis work}
 \label{sec:ObjectiveOfThesis}
 
+The first goal of this thesis is to improve the weaknesses of current version of task-affinity. As described in \cite{lcs}, functions used to perform 
+migration of tasks are not involved in task-affinity logic. Furthermore, 
+
+migration policy adopted in 
+task-affinity is not particular effective, 
+
+
+The first goal of this thesis is to investigate which is the behaviour of task-affinity on different SMP architectures.
+
+TODO imbastire discorso migration
+
+
+%The version of task-affinity developed in \cite{lcs} try to improve determinism, reducing L1 miss rates of the application. Cache misses are only one 
+%possible factor, there are many more hardware factors that influences predictability of applications, such as: inter-chip communications, cache 
+%architectures, hardware prefetching etc. We want to test task-affinity on different architectures, in order to analyze how task-affinity manages these 
+%factors and how much performance are improved.
+
+%We strongly believe that being able to re-use code that was already extensively tested is a goal to pursue. Thus, we must try to give solutions that are 
+%ompatible with the current scheduler implementation %and overall behavior. Moreover, the Linux development model %imposes that code entering the kernel 
+%(i) does what it has to do with little %or no side-effects, being unperceivable for scenarios it does not cover; %(ii) be made in a gradual pace, without 
+%throwing code away, unless with %big and proved reasons; (iii) be efficiently implemented; and (iv) be reviewed %and accepted by the community.
+%Linux and other Unix-like Operating Systems already provide a concept %of processor affinity with which is possible to bound a task to a %certain CPU. 
+%Linux provides even a mechanism to isolate a CPU so just %a limited number of tasks could run on it. Even though this approach %solves some problems of 
+%real-time tasks it is not a desirable solution %because computation power will be underutilized. As said in Sec. 1.1, %pinning real-time tasks to specific 
+%CPUs is an improvement only if there %are just a few of them and plenty of normal tasks that could run on other %processors.
+
+%With the analytical results and the embedded world in mind, besides %little solutions presented on the analysis step, we propose a bigger change
+%to the Linux scheduler, though not throwing away present code. This %change is based on results got from a benchmark, built with this work,
+%which simulates a possible substitution of hardware blocks by real-time %tasks in software. This application uses cooperative threads to produce
+%the final results, which is shown to be not optimally dealt with in current %Linux scheduler. Then it is created in Linux the concept of affinity among
+%threads. It turned out that the current state of real-time scheduling %in Linux is optimized much more for competitive threads rather than
+%cooperative. %Therefore, the goals of this thesis can be summarized as:
+
+
+%TODO negli obbiettivi:
+%
+%the first goal of this thesis is to investigate how task-affinity behaves on different architectures. questo \'e stato fatto perch\'e as showed in molka
+%le cache scassano il cazzo sono complicate devo dire che la task-aff \'e troppo semplicistica ecc.. ... riempi.. for this reasons it is necessary how taskaffinity 
+%
 
 \section{Organization of the thesis}
 \label{sec:OrganizationThesis}

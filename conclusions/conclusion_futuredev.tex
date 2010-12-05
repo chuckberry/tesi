@@ -7,55 +7,29 @@ architecture and inter-chip communications and other hardware factors. Therefore
 on the same CPUs, but it is necessary guarantee that tasks that share common data find what they need possibly in L1 cache. For this reason, we have 
 improved the concept of temporal locality.
 
-The experimental results showed there is an improvement of TODO 
+The experimental results show that task-affinity is effective on Intel i7, where there is an average speedup in term of A2S of $\sim 17\%$. We have 
+increased task migration, nevertheless we have improved throughput and predictability. It is clear that architecture of Intel i7 mitigates the side effects 
+of the high number of migrations of tasks. On Intel Xeon task-affinity is effective only with buffer greater than 4KB, in that case there is an average 
+speedup in term of A2S of $\sim 10,5\%$. It is clear that the effect of migrations of tasks is more significant on this architecture.
+
+We could obtain results still better with a more effective migration policy. In this patch, in order to improve the temporal locality, we have included 
+\textit{push\_rt\_task} in the task-affinity logic and we have seen that, because of the scheduling performed, \textit{pull\_rt\_task} has an higer overhead
+than vanilla. 
+
+We conclude that the mechanism proposed brought, in fact, an improvement of throughput and on determinism of the entire application, especially with buffers
+of big dimension as 32KB. It is interesting that these improvements take place even if L1 and LLC miss rates increase (Intel Xeon) therefore it is clear
+that, according to the cache architecture used, cache misses have a different impact on performance of application.
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Future Works}
 
+In a next step, since we have seen that cache misses have a different impact on determinism of application on different architectures, it is necessary to 
+estimate how much cache misses impact on application performance and in particular on determinism, in order to understand if the task-affinity could 
+improve significantly or not the determinism of application on a given architecture. 
 
-%it may have to warm up cache, as we have seen with Intel Xeon: in that case migrations have a great impact on cache misses and predictability. Furthermore
-%thare are others hardware factors as inter-chip communications that influence predictability
-%
-%TODO commento results
-%
-%TODO commento pull che deve migliorare
-%
-%
-%Migrations of tasks play an important role on predictability of the application 
-%
-% in fact, on Intel Xeon, task-affinity is not particular effective and this fact is due to cache architecture and other hardware details as 
-%inter-chip communications. 
-%
-%We have
-%
-%TODO dire sul problema migration
-%
-%
+Another possible improvement is to optimize the migration policy, in order to include also \textit{pull\_rt\_task} in task-affinity logic and finally, it 
+would be better not to use system calls to define dependencies among tasks, but, instead, to rely in other mechanisms, such as a profiler \cite{calandro}, 
+that infers automatically the dependencies among tasks. The reason is that it is not desirable to modify present applications to use the task-affinity. 
+The mechanism of adding and removing dependencies would be rather the same: only the user interface would need to be changed.
 
-
-
-%
-%
-%
-%
-%
-%We have seen that cache architecture 
-%
-%In questo lavoro abbiamo migliorato 
-%
-%
-%
-%TODO conclusion
-%TODO come si vede la task-affinity \'e fortemente dipendente dall\'architettura la patch non va bene per linux perch\'e serve una politica di migration
-%TODO pi\'u decente
-%
-%TODO io la storia di push e pull per lo Xeon la metterei qui
-%
-%TODO future works:
-%TODO profiler dicendo che quello che manca davvero a questo lavoro \'e un modo per calcolare l\'incidenza dei cache miss di un\'applicazione, e fare un 
-%TODO profiler 
-%
-%TODO negli obbiettivi:
-%
-%the first goal of this thesis is to investigate how task-affinity behaves on different architectures. questo \'e stato fatto perch\'e as showed in molka
-%le cache scassano il cazzo sono complicate devo dire che la task-aff \'e troppo semplicistica ecc.. ... riempi.. for this reasons it is necessary how taskaffinity 
-%
