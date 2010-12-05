@@ -24,8 +24,8 @@ Using relative durations, it is possible to estimate the improvement given by ta
 \label{eq:amdhal}
 \end{equation}
 
-Where $P_{i}$ is the i-th parallelized portion of the program and $S_{i}$ is the correspondent speedup. Furthermore the following constraint must be 
-respected:
+Where $P_{i}$ is the i-th parallelized portion of the program and $S_{i}$ is the correspondent parallelization factor. Furthermore the following constraint 
+must be respected:
 
 \begin{equation}
        \sum_{i=1}^N P_{i} = 1
@@ -41,29 +41,30 @@ task-affinity on different architectures approximates the ideal scheduling showe
 scheduling improves throughput of the application. The improvement of throughput was measured using the Amdhal's Law \ref{eq:amdhal}. We have measured the 
 theoretical speedup given by task-affinity, executing the following experiment:
 
-\begin{enumeration}
+\begin{enumerate}
 \item We have executed benchmark with only one cpu online for each buffer dimension. In this way, benchmark is executed in a serialized way.
 \item We have recorded average execution time of each thread of the benchmark, and the average execution time of a sample.
 \item We have divided the serial execution of benchmark in different portions according to parallelization. For vanilla, we have three portions: $P_{0}$ 
 that includes the sum of execution time of \textit{mixer0} and \textit{mixer1}, $P_{1}$ that includes the sum of execution time of \textit{waves}, $P_{2}$ 
 that includes the execution time of \textit{mixer2}. To determine which is the parallelization of each portion, we have made some approximations, such as: 
 all \textit{waves} have the same duration, \textit{mixer0} and \textit{mixer1} have the same duration. Thanks to these approximations, we can approximate 
-the scheduling performed by vanilla with the ideal scheduling. In this way, $P_{0}$ have a parallelization of $S_{0} = 2$, $P_{1}$ have a parallelization 
-of $S_{1} = 4$, $P_{2}$ have a parallelization of $S_{2} = 1$, Fig. \ref{fig:ideal_scheduling}. 
+the scheduling performed by vanilla with the ideal scheduling. In this way, $P_{0}$ have a parallelization factor of $S_{0} = 2$, $P_{1}$ have a 
+parallelization factor of $S_{1} = 4$, $P_{2}$ have a parallelization factor of $S_{2} = 1$, Fig. \ref{fig:ideal_scheduling}.
 
 Also for task-affinity, we have the same approximations made in the previous case, that is: all \textit{waves} have the same duration, \textit{mixer0} and 
 \textit{mixer1} have the same duration. Furthermore, we have an additional approximation: \textit{mixer2} takes twice the time it takes for a \textit{wave}. 
 With these approximations, the scheduling performed by task-affinity can be approximated by the ideal scheduling. As in previous case, we have three 
-portions: $P_{0}$ includes the sum of execution time of \textit{mixer0} and \textit{mixer1}, it has a parallelization of $S_{0} = 2$. $P_{1}$ includes 
-three \textit{waves} and the portion of \textit{mixer2} that is executed concurrently with three \textit{waves}. $P_{1}$ has a parallelization of 
-$S_{1} = 4$. $P_{2}$ includes the \textit{wave} not yet executed and the portion of \textit{mixer2} that is executed concurrently with \textit{wave}. 
-$P_{2}$ has a parallelization of $S_{2} = 2$, Fig. \ref{fig:ideal_scheduling}. Note that this subdivision is indipendent by the buffer dimension used.
+portions: $P_{0}$ includes the sum of execution time of \textit{mixer0} and \textit{mixer1}, it has a parallelization factor of $S_{0} = 2$. $P_{1}$ 
+includes three \textit{waves} and the portion of \textit{mixer2} that is executed concurrently with three \textit{waves}. $P_{1}$ has a parallelization 
+factor of $S_{1} = 4$. $P_{2}$ includes the \textit{wave} not yet executed and the portion of \textit{mixer2} that is executed concurrently with 
+\textit{wave}. $P_{2}$ has a parallelization factor of $S_{2} = 2$, Fig. \ref{fig:ideal_scheduling}. Note that this subdivision is indipendent by the 
+buffer dimension used.
 
 \item We have determined to which percentage of the serial execution each portion corresponds. Since we have a serial execution for each buffer dimension 
 used, we have different percentages for each portion, for example: $P_{0}$ could be corresponds to $35\%$ on the exectuion with 4KB, $34\%$ on the execution 
 with 8KB and so on. For this reason, for each portion, we have calculated the average percentage in order to use an only value for all dimensions.
 
-\end{enumeration}
+\end{enumerate}
 This experiment is made for each architecture tested. Besides throughput, we want to know if the predictability of the application is improved and, 
 consequently, if cache miss rates and number of migration are reduced. Finally, since also the migration mechanism is involved in task-affinity, we want 
 to investigate which is the overhead that \textit{pull\_rt\_task} and \textit{push\_rt\_task} involve. We have tested task-affinity with Intel Xeon and 
@@ -72,13 +73,13 @@ Intel i7.
 %----------------------------------------------------------------------------------
 \subsection{Consideration on exeperimental results}
 
-All the following considerations are based on the graphics showed in the following pages.
 \begin{description}
 
-\item[throughput:] In both Intel Xeon and Intel i7, parallelism is improved. We can see in Fig \ref{fig:time_avg_var_xeon} an increment of throughput 
-especially with 32 and 64KB, while at 4KB the increment is not very significant, in fact speedup with task-affinity is $2.45$ while with vanilla is $2.38$, 
-they differ only by $\sim 3\%$, see \ref{tab:speedup_xeon_i7}. This lower increment is due to the fact that, see in Fig. \ref{fig:4KB_xeon_results_taskaff} 
-\ref{fig:4KB_xeon_results_van}, using buffer of 4KB, parallelism performed in vanilla is very similar to parallelism performed in task-affinity.
+\item[throughput:] In both Intel Xeon and Intel i7 parallelism is improved, Fig. \ref{fig:time_avg_var_xeon} and \ref{fig:time_avg_var_i7}. On Intel Xeon, 
+we can see an increment of throughput especially with 32KB and 64KB, while at 4KB there isn't any increment, in fact speedup with task-affinity is $2.33$ 
+while with vanilla is $2.38$ \ref{tab}. This fact occurs because, using buffer of 4KB, parallelism performed in vanilla is very similar to 
+parallelism performed in task-affinity TODO figure 4kb. On Intel i7, instead, we see that task-affinity improves parallelism for every buffer dimension 
+used, TODO tab i7.
 
 \begin{figure}[htbp]
 \centering
@@ -94,11 +95,17 @@ they differ only by $\sim 3\%$, see \ref{tab:speedup_xeon_i7}. This lower increm
 \label{fig:4KB_xeon_results_van}
 \end{figure}
 
-As regard for speedups, we see that, using task-afinity in both Xeon and i7, we have real speedups less than ideal speedups. This fact happens because the 
-real performed scheduling is slightly different from ideal scheduling showed in Fig.  \ref{fig:ideal_scheduling} and real parallelism of the application is 
-lower than ideal parallelism. Using vanilla, instead, real speedups are greater than ideal speedups, because real scheduling improve parallelism respect 
-ideal scheduling, Fig.  \ref{fig:ideal_scheduling}. In fact if we see Fig. \ref{fig:4KB_xeon_results_van} we note that there is a fraction of \textit{mixer2} 
-that is executed concurrently with others \textit{waves}, while in ideal scheduling \textit{mixer2} should be executed alone.
+As regard for speedups, we see that, in both Xeon and i7, the estimated average speedups overestimate the real parallelism performed by task-affinity, 
+nevertheless they are a good estimate. In fact, for Xeon, we have the estimated average speedup of $2.42$ and the real average speedup of $2.39$: they 
+differ by $\sim 1\%$.  While for i7, we have an estimated average speedup of $2.64$ and a real average speedup of $2.5$: they differ by $\sim 5\%$. 
+Therefore, we can conclude that scheduling performed by task-affinity can be well approximated by the ideal scheduling, Fig \ref{fig:ideal_scheduling}.
+
+Instead, for vanilla, the estimated average speedups underestimate the real parallelism performed by vanilla. 
+In fact, for Xeon, we have an estimated average speedup of $1.86$ and a real average speedup of $2.19$: they differ by $\sim 18\%$. While for i7, we have 
+an estimated average speedup of $2.11$ and a real average speedup of $2.26$: they differ by $\sim 7\%$. It is clear from these data, that parallelism
+of the scheduling performed by vanilla is greater than parallelism of the ideal scheduling. In fact if we see Fig. \ref{fig:4KB_xeon_results_van} we note 
+that there is a fraction of \textit{mixer2} that is executed concurrently with others \textit{waves}, while in ideal scheduling \textit{mixer2} should be 
+executed alone.
 
 \item[migrations:] Number of migration is greatly increased. This is not due to architectural details or different buffer dimensions. This fact happens 
 because, at each sample, \textit{mixer0} and \textit{mixer1} and \textit{waves} are excuted on the same CPUs. Since in the next sample \textit{waves} are 
@@ -149,20 +156,78 @@ Intel i7, while on Intel Xeon we have some advantage with buffer greater than 4K
 \centering
 \includegraphics[width=\widefigure]{images/results_xeon/final_xeon.eps}
 \caption{\figurecaption{Scheduling performed by task-affinity on Intel Xeon.}}
-\label{fig:trace_xeon}
+\label{fig:final_xeon}
 \end{figure}
 
-As we can see in Fig. \ref{fig:trace_xeon}, the scheduling performed is correct. We see that \textit{mixer2} can precede one of the waves and improve 
+As we can see in Fig. \ref{fig:final_xeon}, the scheduling performed is correct. We see that \textit{mixer2} can precede one of the waves and improve 
 parallelism. We see that \textit{mixer0} chooses the best cpu in term of temporal locality, for example: in step A \textit{mixer0} chooses CPU4 and not 
 CPU2, because on CPU2 was executed \textit{wave2}, therefore L1 cache could be dirty, instead on CPU4 the last task executed is \textit{wave1}, therefore 
 L1 cache should be clean. Also in step B, it is possible to note how \textit{mixer0} take care about the last task executed on CPU4 choosing CPU2.
 
-In order to estimate theoretical speedup, we have to determine which is the portion of serial benchmark execution that correspond to each task.
-First of all, we have to define which speedup $S_{i}$ correspond at which portion $P_{i}$. With reference at Fig. \ref{ideal_scheduling}, at the portion 
-$P_{0}$ in which \textit{mixer0} and \textit{mixer1} are executed concurrently corresponds $S = 2$, at the portion $P_{1}$ in which are executed 
-concurrently \textit{mixer2} and \textit{3 waves} corresponds $S = 4$, at the portion $P_{2}$ in which \textit{mixer2} and a \textit{wave} are executed 
-concurrently corresponds $S = 2$. According to measurement performed, we have seen that the $P_{0}$ corresponds to $\sim 40\%$, the $P_{1}$ corresponds to 
-$\sim 35\%$, the $P_{2}$ corresponds to $\sim 25\%$. According these values, speedups for task-affinity and vanilla are:
+\begin{table}[tbp]
+\centering%
+\subfigure[ Average of execution times of each task on serialized execution (Xeon) ]{%
+\begin{tabular}{l|c|c|c|c}
+	\hline
+	& wave & mixer0/1 & mixer2 & serialized exec. time \\ \hline
+	$4KB$ & 12.18 & 29.59 & 38.84 & 146.76 \\ \hline
+	$8KB$ & 17.74 & 42.72 & 55.57 & 211.98 \\ \hline
+	$16KB$ & 31.47 & 70.35 & 88.53 & 355.13 \\ \hline
+	$32KB$ & 60.12 & 128.72 & 155.34 & 653.27 \\ \hline
+	$64KB$ & 115.42 & 246.2 & 285.62 & 1239.69 \\ \hline
+\end{tabular}
+\label{tab:task_time_xeon}
+}\hspace{4em}
+\subfigure[ Portions of serialized execution already expressed in relative terms (Xeon) ]{%
+\begin{tabular}{l|c|c|c}
+	\hline
+	& $P_{0}$ & $P_{1}$ & $P_{2}$ \\\hline
+	$4KB$ & 40\%& 33\%& 26\%\\ \hline
+	$8KB$ & 39\%& 33\%& 26\%\\ \hline
+	$16KB$ & 40\%& 35\%& 25\%\\ \hline
+	$32KB$ & 40\%& 37\%& 24\%\\ \hline
+	$64KB$ & 40\%& 37\%& 23\%\\ \hline
+	$Average$ & 40\%& 35\%& 25\%\\ \hline
+\end{tabular}
+\label{tab:portion_xeon}
+}
+\label{tab:time_portion_xeon}
+\caption{Times and percentages related to serialized execution of benchmark (Xeon)}
+\end{table}
+
+\begin{table}[tbp]
+\centering%
+\subfigure[ Speedup obtained with task-affinity and with vanilla (Xeon) ]{%
+\begin{tabular}{l|c|c|c|c}
+	\hline
+	& taskaff & vanilla \\ \hline
+	$4KB$ & 2.33 & 2.38 \\ \hline
+	$8KB$ & 2.34 & 2.22  \\ \hline
+	$16KB$ & 2.37 & 2.15 \\ \hline
+	$32KB$ & 2.45 & 2.13 \\ \hline
+	$64KB$ & 2.47 & 2.09 \\ \hline
+	$Average$ & 2.39 & 2.19\\ \hline
+\end{tabular}
+\label{tab:speedup_xeon}
+}\hspace{4em}
+\subfigure[ Average of execution time of a sample with task-affinity and vanilla (Xeon) ]{%
+\begin{tabular}{l|c|c|c}
+	\hline
+	& taskaff & vanilla \\ \hline
+	$4KB$ & 63.08 & 61.58 \\ \hline
+	$8KB$ & 90.6 & 95.54 \\ \hline
+	$16KB$ & 150 & 165.23 \\ \hline
+	$32KB$ & 266.42 & 306.69 \\ \hline
+	$64KB$ & 502.09 & 592.3 \\ \hline
+\end{tabular}
+\label{tab:final_time_xeon}
+}
+\label{tab:final_time_speedup_xeon}
+\caption{between task-affinity and vanilla on Intel Xeon and Intel i7}
+\end{table}
+
+
+According the showed data it possible to estimate the average speedups for task-affinity and vanilla.
 
 \begin{equation}
   Speedup_{taskaff} = \left( \frac{0.4}{2} + \frac{0.35}{4} + \frac{0.25}{2} \right)^{-1} = 2.42
@@ -175,31 +240,12 @@ $\sim 35\%$, the $P_{2}$ corresponds to $\sim 25\%$. According these values, spe
 \end{equation}
 
 
-These are speedups assuming that the executed scheduling would be equal to Fig.  \ref{fig:ideal_scheduling}
-
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/results_xeon/time_avg_var.eps}
 \caption{\figurecaption{Average and Variance of execution time of a sample}}
 \label{fig:time_avg_var_xeon}
 \end{figure}
-
-\begin{table}[htbp]
-\begin{center}
-\begin{tabular}{l|c|c|c}
-	\hline
-	& Speedup on Xeon \\ \hline
-	& taskaff & vanilla \\ \hline
-	$4KB$ & 2.33 & 2.38 \\ \hline
-	$8KB$ & 2.34 & 2.22  \\ \hline
-	$16KB$ & 2.37 & 2.15 \\ \hline
-	$32KB$  & 2.45 & 2.13 \\ \hline
-	$64KB$  & 2.47 & 2.09 \\ \hline
-\end{tabular}
-\label{tab:speedup_xeon_i7}
-\caption{Speedup obtained with task-affinity and with vanilla on Xeon}
-\end{center}
-\end{table}
 
 \begin{figure}[htbp]
 \centering
@@ -246,11 +292,10 @@ These are speedups assuming that the executed scheduling would be equal to Fig. 
 \label{fig:trace_i7}
 \end{figure}
 
-Also in this case, Fig. \ref{fig:trace_i7}, the scheduling performed is correct. We can see how in step A and B mixers choose the correct CPUs according to
-their task-affinity relationships.
+We can see from Fig.\ref{fig:trace_i7}, that also in this case the scheduling performed can be approximated with the ideal scheduling, Fig.
+\ref{fig:ideal_scheduling}. We can see how in step A and B mixers choose the correct CPUs according to their task-affinity relationships.
 
-Also in this case, we have to determine different percentages. According to measurement performed, we have seen that $P_{0}$ corresponds to $\sim 49\%$, 
-$P_{1}$ corresponds to $\sim 32\%$, $P_{2}$ corresponds to $\sim 19\%$. According these values, speedups for task-affinity and vanilla are:
+Also in this case, according to recorded measurement the estimated average speedups are:
 
 \begin{equation}
   Speedup_{taskaff} = \left(\frac{0.32}{2} + \frac{0.49}{4} + \frac{0.19}{2} \right)^{-1} = 2.64
@@ -262,7 +307,68 @@ $P_{1}$ corresponds to $\sim 32\%$, $P_{2}$ corresponds to $\sim 19\%$. Accordin
 \label{eq:speedup_i7_van}
 \end{equation}
 
-Also in this case, These are speedups assuming that the executed scheduling would be equal to Fig. \ref{fig:ideal_scheduling}
+\begin{table}[tbp]
+\centering%
+\subfigure[execution times of each task on serialized execution (i7) ]{%
+\begin{tabular}{l|c|c|c|c}
+	\hline
+	& wave & mixer0/1 & mixer2 & serialized exec. time \\ \hline
+	$4KB$ & 17.86 & 27.31 & 29.25 & 155.31 \\ \hline
+	$8KB$ & 33.17 & 46.39 & 51.88 & 277.32 \\ \hline
+	$16KB$ & 63.65 & 82.49 & 96.54 & 516.11 \\ \hline
+	$32KB$ & 124.85 & 156.46 & 182.3 & 994.59 \\ \hline
+	$64KB$ & 250.27 & 279.39 & 356.96 & 1916.82 \\ \hline
+\end{tabular}
+\label{tab:speedup_xeon}
+}\hspace{4em}
+\subfigure[ portions of serialized execution already expressed in relative terms (Xeon) ]{%
+\begin{tabular}{l|c|c|c}
+	\hline
+	& $P_{0}$ & $P_{1}$ & $P_{2}$ \\\hline
+	$4KB$ & 35\%& 47\%& 18\%\\ \hline
+	$8KB$ & 33\%& 48\%& 19\%\\ \hline
+	$16KB$ & 32\%& 49\%& 18\%\\ \hline
+	$32KB$ & 31\%& 51\%& 19\%\\ \hline
+	$64KB$ & 29\%& 52\%& 19\%\\ \hline
+	$Average$ & 32\%& 49\%& 19\%\\ \hline
+\end{tabular}
+\label{tab:speedup_i7}
+}
+\label{tab:final_speedup}
+\caption{Comparison between task-affinity and vanilla on Intel Xeon and Intel i7}
+\end{table}
+
+\begin{table}[tbp]
+\centering%
+\subfigure[ (Xeon) ]{%
+\begin{tabular}{l|c|c}
+	\hline
+	& taskaff & vanilla \\ \hline
+	$4KB$ & 2.53 & 2.28 \\ \hline
+	$8KB$ & 2.56 & 2.27 \\ \hline
+	$16KB$ & 2.51 & 2.18 \\ \hline
+	$32KB$ & 2.48 & 2.24 \\ \hline
+	$64KB$ & 2.42 & 2.32 \\ \hline
+	$Average$ & 2.5 & 2.26\\ \hline
+\end{tabular}
+\label{tab:speedup_xeon}
+}\hspace{4em}
+\subfigure[  (Xeon) ]{%
+\begin{tabular}{l|c|c}
+	\hline
+	& taskaff & vanilla \\ \hline
+	$4KB$ & 61.44 & 68.25 \\ \hline
+	$8KB$ & 108.22 & 122.42 \\ \hline
+	$16KB$ & 206.03 & 236.35 \\ \hline
+	$32KB$ & 401.53 & 444.38 \\ \hline
+	$64KB$ & 793.5 & 826.83 \\ \hline
+\end{tabular}
+\label{tab:speedup_i7}
+}
+\label{tab:final_speedup}
+\caption{Comparison between task-affinity and vanilla on Intel Xeon and Intel i7}
+\end{table}
+
 
 \begin{figure}[htbp]
 \centering
@@ -271,22 +377,17 @@ Also in this case, These are speedups assuming that the executed scheduling woul
 \label{fig:time_avg_var_i7}
 \end{figure}
 
-\begin{table}[htbp]
-\begin{center}
-\begin{tabular}{l|c|c|c}
-	\hline
-	& Speedup on i7 \\ \hline
-	& taskaff & vanilla \\ \hline
-	$4KB$ & 2.53 & 2.28 \\ \hline
-	$8KB$ & 2.56  & 2.27 \\ \hline
-	$16KB$ & 2.51 & 2.18 \\ \hline
-	$32KB$ & 2.48 & 2.24 \\ \hline
-	$64KB$ & 2.42 & 2.32 \\ \hline
-\end{tabular}
-\caption{Speedup obtained with task-affinity and with vanilla on i7.}
-\label{tab:speedup_i7}
-\end{center}
-\end{table}
+%\begin{table}[htbp]
+%\begin{center}
+%\begin{tabular}{l|c|c|c}
+%	\hline
+%	& Speedup on i7 \\ \hline
+%	& taskaff & vanilla \\ \hline
+%\end{tabular}
+%\caption{Speedup obtained with task-affinity and with vanilla on i7.}
+%\label{tab:speedup_i7}
+%\end{center}
+%\end{table}
 
 \begin{figure}[htbp]
 \centering
