@@ -2,8 +2,8 @@ In this work we have investigated behaviour of task-affinity on different archit
 amount of data and we have an SMP architecture, then occasionally executing them on the first available processors will increase the cache-miss rate. If we 
 move tasks to be executed near to where data was produced, then we spare some cache-misses \cite{lcs}. We have demonstrate that this assumption is not 
 always true. Migrations of tasks play an important role on predictability of the applications. When a task migrates, data could be moved from one cache to 
-another. As we have seen with Intel Xeon and as it is demonstrated in \cite{molka}, this operation may involve high latency that depends on cache 
-architecture and inter-chip communications and other hardware factors. Therefore it is clear that it is not enough to execute tasks that share common data 
+another. As we have seen on Intel Xeon and as it is demonstrated in \cite{molka}, this operation may involve high latency that depends on cache 
+architecture, inter-chip communications and other hardware factors. Therefore it is clear that it is not enough to execute tasks that share common data 
 on the same CPUs, but it is necessary guarantee that tasks that share common data find what they need possibly in L1 cache. For this reason, we have 
 improved the concept of temporal locality.
 
@@ -24,7 +24,31 @@ that, according to the cache architecture used, cache misses have a different im
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Future Works}
 
-In a next step, since we have seen that cache misses have a different impact on determinism of application on different architectures, it is necessary to 
+During the development of task-affinity, NUMA architectures were never considered. In the final part of this thesis we have started to analyze the 
+behaviour of task-affinity on AMD Opteron, a NUMA architecture. In a first trial, using some kernel facilities, we have held all tasks to be executed only 
+on one node, in order to simulate an SMP architecture. We have obtained the following results:
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\widefigure]{images/results_AMD/final_AMD.eps}
+\caption{\figurecaption{Scheduling performed by task-affinity on Opteron}}
+\label{fig:trace_AMD}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\widefigure]{images/results_AMD/time_avg_var_AMD.eps}
+\caption{\figurecaption{Average and Variance of execution time of a sample Opteron}}
+\label{fig:time_avg_var_AMD}
+\end{figure}
+
+Task-affinity on this machine doesn't work properly. We can see in step B that \textit{mixer0} doesn't choose the correct CPU. The incorrect behaviour of 
+task-affinity is also reflected by Fig. \ref{fig:time_avg_var_AMD}, where we can see a worsening of throughput and predictability. It is possible that the 
+task-affinity doesn't work, because of a lot of kernel threads used to manage load balancing and others kernel activities in NUMA architectures: but this is 
+only an hypotesis. According these results, it is clear that task-affinity needs the support for NUMA architectures, this is the first step to improve 
+task-affinity.
+
+In this work, we have seen that cache misses have a different impact on determinism of application on different architectures, it is necessary to 
 estimate how much cache misses impact on application performance and in particular on determinism, in order to understand if the task-affinity could 
 improve significantly or not the determinism of application on a given architecture. 
 

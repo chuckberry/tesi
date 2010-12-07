@@ -12,12 +12,12 @@ concurrently two threads on the same CPU. Nowadays it was introduced multicore
 technolgy that consist of N superscalar processors put in the same chip. This tecnology allows a great parallelization of task execution.
 With reference to memory organisation, multiprocessor systems are classified into two groups:
 
-\begin{itemize}
-	\item Centralised Shared Memory Architectures: in this architecture, there are multiple cores connected to a single shared memory. If all cores are
+\begin{description}
+	\item [Centralised Shared Memory Architectures:] in this architecture, there are multiple cores connected to a single shared memory. If all cores are
 	      equal this architecture is called simmetric multiprocessor (SMP)
-	\item Distributed Memory Architecture: in this architecture each processor has its own memory module and memory access time depends on the memory 
+	\item [Distributed Memory Architecture:] in this architecture each processor has its own memory module and memory access time depends on the memory 
 	      location relative to a processor. Non-uniform memory access (NUMA) processor are included in this category of architecture
-\end{itemize}
+\end{description}
 
 Multicore architectures have been adopted by most chip manufacturers. Dual-core chips are commonplace, and numerous four and eight core options exist. 
 In the coming years, per-chip core counts will continue to increase: Intel has claimed that it will release 80-core chips as early as 2013. 
@@ -81,46 +81,51 @@ furthermore this kind of works was experimented with good outcome also in embedd
 \section{Objectives of this thesis work}
 \label{sec:ObjectiveOfThesis}
 
-The first goal of this thesis is to improve the weaknesses of current version of task-affinity. As described in \cite{lcs}, functions used to perform 
-migration of tasks are not involved in task-affinity logic. Furthermore, 
+Lo scopo principale di questa tesi \'e l' ottimizzazione della versione attuale della task-affinity. In un primo passo, analizzeremo come la task-affinity 
+si comporta su diverse architetture multicore; in particolare sull' Intel Xeon E5440 e sull'Intel i7 870. Queste due architetture sono state scelte
+perch\'e hanno una architettura delle cache molto diversa tra di loro e inoltre, anche il sistema di comunicazione tra chip \'e molto diverso in termini
+di prestazioni. Con l'analisi che si vuole eseguire, cercheremo di capire quali sono gli aspetti dell'attuale logica della task-affinity da migliorare per
+poter sfruttare al meglio le architetture testate, per esempio: attualmente, come descritto in \cite{lcs}, la politica di migration effettuata non \'e 
+molto efficace, perch\'e alcuni task tendono a rimbalzare da una CPU all'altra, ad ogni iterazione del benchmark. Crediamo che questo fenomeno degradi
+le peformance ottenibili con la task-affinity, perch\'e spesso un task che migra deve anche eseguire il warm up della cache della CPU su cui esso \'e
+migrato, e questo aumenta il miss rate. Quello che ci aspettiamo \'e che l'analisi metta in luce, per ogni architettura, quanto questo "migration pattern" 
+incida sul miss rate di un task.
 
-migration policy adopted in 
-task-affinity is not particular effective, 
+Tenendo conto dei risultati presentati nella fase di analisi, proporremo un' ottimizzazione volta a migliorare la localit\'a temporale dei dati, in modo da
+diminuire il miss rate di un task; per fare ci\'o includeremo nella logica della task-affinity anche le funzioni usate per la migrazione dei task. 
+Nell'ultima parte dell\'ottimizzazione introdurremo la sincronizzazione per le strutture dati usate nella task-affinity. Tutte le misure effettuate sulla 
+task-affinity e sul vanilla sono state eseguite usando il benchmark used in \cite{lcs}.
 
+Quindi gli obbiettivi di questa tesi possono essere riassunti come:
 
-The first goal of this thesis is to investigate which is the behaviour of task-affinity on different SMP architectures.
+\begin{enumerate}
+\item analizzare il comportamento dell'attuale versione della task-affinity su diverse archietture per capire quali aspetti migliorare.
+\item ottimizzare la versione attuale della task-affinity, migliorando la politica di migrazione dei task e migliorando la localit\'a temporale dei dati 
+garantita dalla task-affinity.
+\end{enumerate}
 
-TODO imbastire discorso migration
-
-
-%The version of task-affinity developed in \cite{lcs} try to improve determinism, reducing L1 miss rates of the application. Cache misses are only one 
-%possible factor, there are many more hardware factors that influences predictability of applications, such as: inter-chip communications, cache 
-%architectures, hardware prefetching etc. We want to test task-affinity on different architectures, in order to analyze how task-affinity manages these 
-%factors and how much performance are improved.
-
-%We strongly believe that being able to re-use code that was already extensively tested is a goal to pursue. Thus, we must try to give solutions that are 
-%ompatible with the current scheduler implementation %and overall behavior. Moreover, the Linux development model %imposes that code entering the kernel 
-%(i) does what it has to do with little %or no side-effects, being unperceivable for scenarios it does not cover; %(ii) be made in a gradual pace, without 
-%throwing code away, unless with %big and proved reasons; (iii) be efficiently implemented; and (iv) be reviewed %and accepted by the community.
-%Linux and other Unix-like Operating Systems already provide a concept %of processor affinity with which is possible to bound a task to a %certain CPU. 
-%Linux provides even a mechanism to isolate a CPU so just %a limited number of tasks could run on it. Even though this approach %solves some problems of 
-%real-time tasks it is not a desirable solution %because computation power will be underutilized. As said in Sec. 1.1, %pinning real-time tasks to specific 
-%CPUs is an improvement only if there %are just a few of them and plenty of normal tasks that could run on other %processors.
-
-%With the analytical results and the embedded world in mind, besides %little solutions presented on the analysis step, we propose a bigger change
-%to the Linux scheduler, though not throwing away present code. This %change is based on results got from a benchmark, built with this work,
-%which simulates a possible substitution of hardware blocks by real-time %tasks in software. This application uses cooperative threads to produce
-%the final results, which is shown to be not optimally dealt with in current %Linux scheduler. Then it is created in Linux the concept of affinity among
-%threads. It turned out that the current state of real-time scheduling %in Linux is optimized much more for competitive threads rather than
-%cooperative. %Therefore, the goals of this thesis can be summarized as:
-
-
-%TODO negli obbiettivi:
-%
-%the first goal of this thesis is to investigate how task-affinity behaves on different architectures. questo \'e stato fatto perch\'e as showed in molka
-%le cache scassano il cazzo sono complicate devo dire che la task-aff \'e troppo semplicistica ecc.. ... riempi.. for this reasons it is necessary how taskaffinity 
-%
+Tutte le patch sviluppate in questa tesi si basano sulla versione 2.6.34 del kernel Linux. 
 
 \section{Organization of the thesis}
 \label{sec:OrganizationThesis}
 
+\begin{description}
+
+\item [Chapter 2:] we first discuss the issues due to an incorrect use of cache. We will see how an unfair cache sharing may degrade performance and 
+higly reduce the determinism of applications.
+
+A survey of scheduling algorithms for real-time tasks used in various
+Operating Systems is presented paying attention to those already imple-
+mented in Linux and those that may be present in a near future. The
+last section shows some metrics used by developers of real-time systems
+to quantify performance and determinism.
+ 
+
+\item [Chapter 3:]
+
+\item [Chapter 4:] presents the experimental results regarding the correct behavior of the solution and the improvements in respect to current version of
+task-affinity.
+
+\item [In Chapter 5:] we draw the conclusions on the work summarizing achieved results and proposing possible future development
+
+\end{description}

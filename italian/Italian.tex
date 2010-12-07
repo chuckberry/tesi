@@ -1,10 +1,107 @@
-TODO 
+Nella sfida per fabbricare la CPU pi\'u performante, i progettisti hardware si devono confrontare con un problema molto complicato. Da un lato la Legge 
+di Moore non si pu\'o pi\'u applicare alla capacit\'a computazionale di una macchina, cioe\': la capacit\'a computazionale non si raddoppia pi\'u ogni 18 
+mesi, come nel passato. Dall' altro lato, il consumo di potenza continua ad aumentare pi\'u che linearmente con il numero di transistors inclusi in un chip 
+e la Legge di Moore vale ancora per il numero di transistor in un chip. Parecchie soluzioni sono state adottate per risolvere questo problema. Alcune die 
+esse cercano di ridurre il consumo di potenza sacrificando la capacit\'a computazionale, di solito usando il frequency scaling, il voltage throttle o 
+entrambi. Altre soluzioni cercano di in aumentare l' Instruction Level Parallelism (ILP) all'interno di un processore, in modo da avere pi\'u capacit\'a 
+computazionale da un processore senza aumentare il consumo di potenza. Tuttavia, oggigiorno il costo di un cache miss (che potrebbe mandare in stallo la 
+pipeline) o di uno sbaglio nella predizione di un branch (che potrebbe invalidare la pipeline) sono diventati troppo elevati. Gi\'a nei primi anni 2000, era
+chiaro che la via pi\'u efficace per aumentare la capacit\'a computazionale e ridurre il consumo di potenza consisteva nel parallelizzare l' esecuzione dei
+task. Per questo motivo \'e stato introdotto il Simultaneous MultiThreading (SMT). Questa tecnologia permetteva di eseguire due thread in modo concorrente 
+sulla stessa CPU, in questo modo \'e possibile avere una grande parallelizzazione dell' esecuzione dei task. In base a come sono organizzate le memorie, i
+sistemi a multiprocessore sono classificati in due gruppi:
+
+\begin{description}
+
+\item [Centralised Shared Memory Architectures:] in queste architetture, ci sono diversi core connessi ad una memoria condivisa. Se tutti i cores 
+sono uguali, queste architetture si chiamano simmetric multiprocessor (SMP).
+
+\item [Distributed Memory Architecture:] in queste architetture, ciascun processore ha il suo proprio modulo di memoria e il tempo di accesso alla memoria 
+dipende dalla locazione di memoria relativamente al processore che vi accede. In questa categoria di architetture sono incluse le Non-uniform memory access 
+(NUMA).
+
+\end{description}
+
+Le architetture multicore sono state adottate da molte industrie di microprocessori. I chips Dual-core sono ormai una soluzione comune e numerose opzioni da
+4 e 8 cores sono disponibili. Negli anni a venire, il numero di core integrati in un chip continuer\'a a crescere: Intel ha annunciato che rilascer\'a per
+chips a 80 core per il 2013. Il passaggio alle tecnologie multicore \'e un evento di svolta, poich\'e esso porta le piattaforme di computazione standard ad
+essere multiprocessori. 
+
+Anche molti sistemi embedded stanno iniziando ad usare architetture multicore, perch\'e questi processori forniscono un grande incremento di capacit\'a 
+computazionale con un basso incremento di consumo di potenza e questo \'e un aspetto importante per questo tipo di dispositivi. Ma c\'e un' ostacolo 
+all' uso di queste architetture in nel settore embedded e in particolare nei sistemi Real-Time. Immaginate questa situazione: ci sono 3 tasks Real-time: A, 
+B e C. A usa 512KB di memoria, B ne usa 768KB e C ne usa 256KB. La nostra piattaforma \'e un Dual-core provvisto di cache condivisa onchip di 1MB. Ci sono 
+due casi possibili di scheduling. Nel primo caso A e C (o B e C) sono schedulati concorrentemente. C'\'e abbastanza spazio in cache per allocare le risore
+dei due task, perci\'o non c'\'e nessun problema. Nel secondo caso A \'e schedulato insieme a B: avviene cache thrashing. Le performante dei due task 
+potrebbero peggiorare rispetto al caso precedente, perch\'e non c'\'e alcuna garanzia che A e B possano trovare i dati necessari nella cache condivisa e, 
+inoltre, \'e impossibile prevedere la durata di A o B, perch\'e se A \'e schedulto insieme a B, esso avr\'a una certa durata. Invece, se A \'e schedulato 
+insieme a C, esso avr\'a un' altra durata, in altre parole: la durata di un task dipende da quale altro task \'e schedulato con esso e, per questo motivo, 
+utilizzando i comuni algoritmi di scheduling Real-Time, le tecniche di analisi dei tempi per il software embedded usate nei sistemi a 
+single core non sono pi\'u utilizzabili nei sistemi multicore. Per questa ragione, sono necessarie nuove tecniche per stimare il worst-case execution time
+(WCET) dei tasks Real-Time. 
+
+Risulta chiaro quindi, che lo scheduler gioca un ruolo importante nel migliorare la predicibilit\'a e le performance delle applicazioni. Oggigiorno \'e 
+importante sviluppare algoritmi di scheduling "cache-aware", cio\'e uno scheduler che, per scegliere la CPU dove mettere un task, considera come i tasks 
+schedulati usano la memoria cache, in modo da evitare il cache thrashing. Questa tesi \'e il proseguimento del lavoro svolto da Lucas De Marchi, egli ha 
+provato a rendere lo scheduler Real-Time di Linux cache-aware, introducendo il concetto di task-affinity.
 
 \section{Stato dell'arte}
 \label{sec:StateDellArte}
 
+Sebbene il problema di progettare un algoritmo di scheduling cache-aware sia vecchio e ben conosciuto da oltre 20 anni e i multicore siano ampiamente 
+diffusi, attualmente i sistemi operativi in commercio non implementano questo tipo di algoritmi e in letteratura sono presenti solo pochi lavori che 
+studiano questo problema. I lavori di ricerca pi\'u recenti relativi a questo argomento consistono in attivit\'a di profiling, che hanno lo scopo di 
+dimostrare come una condivisione scorretta della cache da parte di task concorrenti possa rallentarli e causare: throughput sub-ottimale, cache thrashing
+e, in alcuni casi, task starvation per i task che non riescono ad occupare spazio sufficiente nella cache necessario per fare buoni progressi nella loro 
+esecuzione. Il primo lavoro ben documentato relativo a questo tipo di scheduling \'e stato sviluppato all' universit\'a di Stanford. Alla fine degli anni 
+80, il Computer Systems Laboratory di Stanford svilupp\'o un prototipo di un multiprocessore a memoria condivisa chiamato DASH. La sua architettura era 
+molto simile a quella usata nel moderni processori SMP; DASH poteva incorporare fino a 64 processori RISC. Per poter sfruttare le piene potenzialit\'a della
+macchina, venne sviluppato un runtime system ad hoc ed un linguaggio: COOL. Esso era un' estensione del C++ che introduceva alcuni statements per facilitare
+la definizione del parallelismo a grana fine o grossa e per definire quali erano i pattern di accesso alla memoria eseguiti dall' applicazione. Il 
+compilatore di COOL era in grado di estrarre automaticamente informazioni sul parallelismo del programma che potevano eesere usate da 
+architetture che, come DASH, supportavano un tale livello di concorrenza, ed informazioni sull' uso della cache fatto dall' applicazione. Usando queste
+informazioni, il runtime system poteve assicurare il parallelismo desiderato dal programmatore e cercare di ridurre il miss rate di ciascun task, perch\'e 
+il sistema "sapeva", per ciascun task, quali fossero gli oggetti referenziati da esso; in questo modo schedulava oggetti e tasks in modo da renderli vicini.
+In parole povere, usando informazioni aggiuntive fornite dal programmatore e sfruttando il principio di localit\'a dei dati, il runtime system decideva dove
+allocare gli oggetti e assegnava ad un task una CPU che conteneva nella sua cache gli oggetti referenziati da esso. Il progetto COOL mostra come un uso 
+intelligente della cache sia un problema che coinvolge tutti gli aspetti dell' ingegneria del software, dal compilatore allo scheduler e il sistema di 
+gestione della memoria.
+
+Altri Lavori di ricerca svolti in questi anni sfruttano un' altra strategia. Essi non introducono un nuovo linguaggio di programmazione o sofisticati 
+ambienti di runtime, ma implementano un profiler grezzo che, a runtime, inferisce quanto spazio nella cache \'e richiesto da un task, in modo da inferire 
+quali tasks potrebbero causare cache thrashing, se fossero schedulati concorrentemente. Per fare questo lavoro, il profiler esegue una fase periodica di
+taratura in cui analizza il miss rate di ciascun task, in questo modo, \'e possibile capire l' ammontare di spazio usato da un task. Sulla base di queste
+informaizoni due o pi\'u tasks sono schedulati su diverse CPUs solo se non causano cache thrashing. Questi lavori non sono efficaci come COOL, ma presentano
+buoni risultati con i benchmark presenti nella suite SPEC2000, inoltre alcuni di questi lavori sono stati sprimentati anche in sistemi embedded con esiti
+soddisfacenti.
+
 \section{Obiettivi di questa tesi}
 \label{sec:ObbiettiviTesi}
+
+Lo scopo principale di questa tesi \'e l' ottimizzazione della versione attuale della task-affinity. In un primo passo, analizzeremo come la task-affinity 
+si comporta su diverse architetture multicore; in particolare sull' Intel Xeon E5440 e sull'Intel i7 870. Queste due architetture sono state scelte
+perch\'e hanno una architettura delle cache molto diversa tra di loro e inoltre, anche il sistema di comunicazione tra chip \'e molto diverso in termini
+di prestazioni. Con l'analisi che si vuole eseguire, cercheremo di capire quali sono gli aspetti dell'attuale logica della task-affinity da migliorare per
+poter sfruttare al meglio le architetture testate, per esempio: attualmente, come descritto in \cite{lcs}, la politica di migration effettuata non \'e 
+molto efficace, perch\'e alcuni task tendono a rimbalzare da una CPU all'altra, ad ogni iterazione del benchmark. Crediamo che questo fenomeno degradi
+le peformance ottenibili con la task-affinity, perch\'e spesso un task che migra deve anche eseguire il warm up della cache della CPU su cui esso \'e
+migrato, e questo aumenta il miss rate. Quello che ci aspettiamo \'e che l'analisi metta in luce, per ogni architettura, quanto questo "migration pattern" 
+incida sul miss rate di un task.
+
+Tenendo conto dei risultati presentati nella fase di analisi, proporremo un' ottimizzazione volta a migliorare la localit\'a temporale dei dati, in modo da
+diminuire il miss rate di un task; per fare ci\'o includeremo nella logica della task-affinity anche le funzioni usate per la migrazione dei task. 
+Nell'ultima parte dell\'ottimizzazione introdurremo la sincronizzazione per le strutture dati usate nella task-affinity. Tutte le misure effettuate sulla 
+task-affinity e sul vanilla sono state eseguite usando il benchmark used in \cite{lcs}.
+
+Quindi gli obbiettivi di questa tesi possono essere riassunti come:
+
+\begin{enumerate}
+\item analizzare il comportamento dell'attuale versione della task-affinity su diverse archietture per capire quali aspetti migliorare.
+\item ottimizzare la versione attuale della task-affinity, migliorando la politica di migrazione dei task e migliorando la localit\'a temporale dei dati 
+garantita dalla task-affinity.
+\end{enumerate}
+
+Tutte le patch sviluppate in questa tesi si basano sulla versione 2.6.34 del kernel Linux 
 
 \section{Organizzazione della tesi}
 \label{sec:OrganizzazioneTesi}
