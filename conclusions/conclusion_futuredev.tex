@@ -45,7 +45,7 @@ on one node, in order to simulate an SMP architecture. We have obtained the foll
 Task-affinity on this machine doesn't work properly. We can see in step B that \textit{mixer0} doesn't choose the correct CPU. The incorrect behaviour of 
 task-affinity is also reflected by Fig. \ref{fig:time_avg_var_AMD}, where we can see a worsening of throughput and predictability. It is possible that the 
 task-affinity doesn't work, because of a lot of kernel threads used to manage load balancing and others kernel activities in NUMA architectures: but this is 
-only an hypotesis. According these results, it is clear that task-affinity needs the support for NUMA architectures, this is the first step to improve 
+only an hypothesis. According these results, it is clear that task-affinity needs the support for NUMA architectures, this is the first step to improve 
 task-affinity.
 
 In this work, we have seen that cache misses have a different impact on determinism of application on different architectures, it is necessary to 

@@ -43,15 +43,15 @@ class-specific \texttt{select\_task\_rq\_rt}, is called. The function
   \caption{A portion of the \texttt{try\_to\_wake\_up} method}
 \end{figure}
 
-\item \texttt{select\_task\_rq\_rt} choose on which cpu $p$ will be executed. It
-calls \texttt{find\_lowest\_rq} that returns the best cpu where to put $p$. Criteria
-used to choose the best cpu for $p$ will be described soon. When \texttt{select\_task\_rq\_rt} 
+\item \texttt{select\_task\_rq\_rt} choose on which CPU $p$ will be executed. It
+calls \texttt{find\_lowest\_rq} that returns the best CPU where to put $p$. Criteria
+used to choose the best CPU for $p$ will be described soon. When \texttt{select\_task\_rq\_rt} 
 returns, check for cpuaffinity \footnote{On Linux it is possible decide on which
-cpu a task can be executed. The set of cpus that can execute a task is called 
+CPU a task can be executed. The set of CPUs that can execute a task is called 
 cpuaffinity of that task. Each task owns a mask called \textit{cpus\_allowed} 
-that include all cpus where it can be executed, that is its cpuaffinity} and 
-if selected cpu is online, in that case returns, otherwise calls 
-\texttt{select\_fallback\_rq} that returns an any online cpu that "respects" 
+that include all CPUs where it can be executed, that is its cpuaffinity} and 
+if selected CPU is online, in that case returns, otherwise calls 
+\texttt{select\_fallback\_rq} that returns an any online CPU that "respects" 
 $p$'s cpuaffinity.
 
 \begin{figure}[h]
@@ -122,13 +122,16 @@ Another important part of scheduling procedure is the migration policy. Migratio
 
 \begin{description}
 \item[Push tasks:] The push operation is implemented by \texttt{push\_rt\_task()}. The function receives in input a runqueue and looks at the 
-highest-priority non-running runnable real-time task on the input runqueue and considers all the runqueues to find a cpu where it can run. It 
+highest-priority non-running runnable real-time task on the input runqueue and
+considers all the runqueues to find a CPU where it can run. It 
 searches for a runqueue that is of lower priority, that is, one where the currently running task can be preempted by the task that is being pushed. 
 
-The research and the choice of the best cpu for the task to push is executed by \texttt{find\_lowest\_rq} the same function used in 
-\texttt{select\_task\_rq\_rt}. This function builds a mask of cpus that contains the lowest-priority runqueues and returns the cpu on which the task 
+The research and the choice of the best CPU for the task to push is executed by \texttt{find\_lowest\_rq} the same function used in 
+\texttt{select\_task\_rq\_rt}. This function builds a mask of cpus that contains
+the lowest-priority runqueues and returns the CPU on which the task 
 to push has last executed, as it is likely to be cache-hot in that location. If this is not possible, the \texttt{sched\_domain} map is considered 
-to find a CPU that is logically closest to last cpu that has executed the task to push. If this fails too, a cpu is selected randomly from the mask.
+to find a CPU that is logically closest to last CPU that has executed the task
+to push. If this fails too, a CPU is selected randomly from the mask.
 
 The push operation is performed until a real-time task fails to be migrated or there are no more tasks to be pushed. Because the algorithm always 
 selects the highest non-running task for pushing, the assumption is that, if it cannot migrate it, then most likely the lower real-time tasks cannot 
@@ -151,7 +154,8 @@ The current task of any runqueue can't never be in a pushable list, in fact, dur
 runqueue's pushable list.
 
 \item[Pull task:] The pull operation is implemented by \texttt{pull\_rt\_task()}. The algorithm looks at all the overloaded runqueues in the system 
-and checks whether they have a Real-time task that can run on the current runqueue (that is, checks if the target cpu "respects" the cpuaffinity of 
+and checks whether they have a Real-time task that can run on the current
+runqueue (that is, checks if the target CPU "respects" the cpuaffinity of 
 the task to pull) and if that Real-time task is of a priority higher than the task the target runqueue is about to schedule. If so, the task is 
 queued on the current runqueue. This search aborts only after scanning all the overloaded runqueues in the system. 
 
@@ -237,7 +241,7 @@ current version of task-affinity in terms of predictability and throughput on di
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/time/time_avg_var_Xeon.eps}
-\caption{\figurecaption{Average and Variance of execution time of a sample on Xeon}}
+\caption{\figurecaption{Average and Std. Deviation of execution time of a sample on Xeon}}
 \label{fig:avg_var_xeon}
 \end{figure}
 
@@ -246,7 +250,7 @@ current version of task-affinity in terms of predictability and throughput on di
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/time/time_avg_var_i7.eps}
-\caption{\figurecaption{Average and Variance of execution time of a sample on i7}}
+\caption{\figurecaption{Average and Std. Deviation of execution time of a sample on i7}}
 \label{fig:avg_var_i7}
 \end{figure}
 
@@ -287,14 +291,14 @@ Xeon and i7.
  \centering
   \includegraphics[width=\widefigure]{images/cache_miss/l1_load_store_Xeon.eps}
   \label{fig:l1_load_store_Xeon}
- \caption{\figurecaption{Cache miss rate of read and write instructions on Xeon}}
+ \caption{\figurecaption{L1 miss rate of read and write instructions on Xeon}}
 \end{figure}
 
 \begin{figure}[htbp]
  \centering
   \includegraphics[width=\widefigure]{images/cache_miss/l1_load_store_i7.eps}
   \label{fig:l1_load_store_i7}
- \caption{\figurecaption{Cache miss rate of read and write instructions on i7}}
+ \caption{\figurecaption{L1 miss rate of read and write instructions on i7}}
 \end{figure}
 
 On Intel Xeon read and write miss rates are increased and, consequently, predictability is degradated.
@@ -310,22 +314,28 @@ the reason of this problem see Fig. \ref{fig:migr_pat}.
 \begin{figure}[h]
 \centering
 \includegraphics[width=\widefigure]{images/migr_i7.eps}
-\caption{\figurecaption{Step A: mixer0 chooses cpu4. Step B: mixer2 chooses cpu4. Step C: mixer0 chooses cpu2}}
+\caption{\figurecaption{Step A: \textit{mixer0} chooses CPU4. Step B:
+\textit{mixer2} chooses CPU4. Step C: mixer0 chooses CPU2}}
 \label{fig:migr_pat}
 \end{figure}
 
-Consider step A. According to the current task-affinty logic, \textit{mixer0} has to choose a cpu that has executed \textit{wave0} or 
-\textit{wave1}, that is CPU2 or CPU4, \textit{mixer2} has to choose a cpu that have executed \textit{mixer0} or \textit{mixer1}, that is CPU3 or 
-CPU1. \textit{mixer0} chooses the least loaded runqeue, therefore it chooses CPU4. At Step B \textit{mixer2} can choose between CPU4 or CPU1, they 
-have the same number of Real-time task, therefore \textit{mixer2} choose the first cpu in its list, that is CPU4. At step C, \textit{mixer0} has to 
+This picture was made using \textit{gtkwave}, a tool that show in a graphic way the scheduling performed.
+Consider step A. According to the current task-affinty logic, \textit{mixer0}
+has to choose a CPU that has executed \textit{wave0} or 
+\textit{wave1}, that is CPU2 or CPU4, \textit{mixer2} has to choose a CPU that have executed \textit{mixer0} or \textit{mixer1}, that is CPU3 or 
+CPU1. \textit{mixer0} chooses the least loaded runqueue, therefore it chooses CPU4. At Step B \textit{mixer2} can choose between CPU4 or CPU1, they 
+have the same number of Real-time task, therefore \textit{mixer2} choose the
+first CPU in its list, that is CPU4. At step C, \textit{mixer0} has to 
 choose CPU2 or CPU4 again, but it can't choose CPU4, as in step A, because it is still occupied by \textit{mixer2}, so \textit{mixer0} has to be 
-executed on CPU2. This is the problem. Since \textit{mixer0} or \textit{mixer1} choose a cpu occupied by \textit{mixer2}, one of them will have to 
-migrate.
+executed on CPU2. This is the problem. Since \textit{mixer0} or \textit{mixer1}
+choose a CPU occupied by \textit{mixer2}, one of them will have to migrate.
 
 Task's migration can degrade performance because a migrated task could warm up a new cache and it could create new cache interference in a new 
 location already occupied by other tasks. In order to measure how much this migration pattern increases miss rate of the application, the following 
-experiment was performed: two run of the benchmark are performed, in the first run all tasks are pinned on a specific cpu and they can't mirgate, in 
-the second run only waves are pinned and mixers can migrate, Tab.\ref{tab:assignment} summarizes the relative cpu assignments. 
+experiment was performed: two run of the benchmark are performed, in the first
+run all tasks are pinned on a specific CPU and they can't migrate, in 
+the second run only waves are pinned and mixers can migrate,
+Tab.\ref{tab:assignment} summarizes the relative CPU assignments. 
 
 \begin{table}[tbp]
 \centering%
@@ -363,27 +373,28 @@ With dimensions greater than 32KB, the buffers can't be loaded entirely in L1 ca
 rates should diminish. With buffer less than 32KB, accesses to LLC are very different between cases with all task pinned and case with only waves 
 pinned and then, miss rates that occur in two cases are not longer comparable. Note that on Intel i7, LLC is L3 and between L1 and L3 there are private L2 
 caches that can store buffer of 32KB and 64KB, therefore also with buffers of 32KB and 64KB accesses to LLC should be very different in the considered cases.
-But as we will see in the following graphics, also on Intel i7, in the considere cases, the number of accesses to LLC is about the same with buffer greater 
+But as we will see in the following graphics, also on Intel i7, in the
+considered cases, the number of accesses to LLC is about the same with buffer greater 
 than 32KB. 
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/cpuaff/cpuaff_l1_load_store_Xeon.eps}
-\caption{\figurecaption{percentage of L1 read and write misses on Xeon}}
+\caption{\figurecaption{L1 miss rate of read and write instructions on Xeon}}
 \label{fig:cpuaff_l1_load_store_xeon}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/cpuaff/cpuaff_acc_l2_load_store_Xeon.eps}
-\caption{\figurecaption{number of LLC read and write accesses on Xeon}}
+\caption{\figurecaption{Number of LLC read and write accesses on Xeon}}
 \label{fig:cpuaff_acc_l2_load_store_xeon}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/cpuaff/cpuaff_l2_load_store_Xeon.eps}
-\caption{\figurecaption{number of LLC read and write accesses on Xeon}}
+\caption{\figurecaption{LLC miss rate of read and write instructions on Xeon}}
 \label{fig:cpuaff_l2_load_store_xeon}
 \end{figure}
 \newpage
@@ -391,21 +402,21 @@ than 32KB.
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/cpuaff/cpuaff_l1_load_store_i7.eps}
-\caption{\figurecaption{percentage of L1 read miss on i7}}
+\caption{\figurecaption{L1 miss rate of read and write instructions on i7}}
 \label{fig:cpuaff_l1_load_i7}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/cpuaff/cpuaff_acc_l3_load_store_i7.eps}
-\caption{\figurecaption{number of LLC read and write accesses on i7}}
+\caption{\figurecaption{Number of LLC read and write accesses on i7}}
 \label{fig:cpuaff_acc_l2_load_store_i7}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/cpuaff/cpuaff_l3_load_store_i7.eps}
-\caption{\figurecaption{percentage of LLC read miss on i7}}
+\caption{\figurecaption{LLC miss rate of read and write instructions on i7}}
 \label{fig:cpuaff_l1_load_i7}
 \end{figure}
 
@@ -431,7 +442,7 @@ benchmark are compared: in the first run all tasks are pinned, while in the seco
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/cpf_time/time_cpf_var_Xeon_i7.eps}
-\caption{\figurecaption{variance of execution time of a sample on Xeon and i7: all task pinned compared vanilla}}
+\caption{\figurecaption{Std. Deviation of execution time of a sample on Xeon and i7: all task pinned compared vanilla}}
 \label{fig:time_cpf_var_Xeon_i7}
 \end{figure}
 
@@ -445,7 +456,7 @@ interconnect developed by Intel to compete with HyperTransport. This first imple
 theoretical bandwidth of Intel's 1600 MHz FSB, that is the best performance obtainable with FSB. From datasheet, Intel Xeon E5440 use a FSB at 1333 MHz, 
 therefore communication between chips are more faster on i7. Hence, it is clear that communication between cores that belong to different dies is very 
 expensive on Intel Xeon. On Intel Xeon, \textit{mixer0} or \textit{mixer1} could find one buffer in L1 cache and other buffer in a bank of L2 that is 
-shared by the cpu that have execute it. \textit{Mixer2} could find one buffer on L1 one cache, while other buffer is \textit{always} placed on bank of L2 
+shared by the CPU that have execute it. \textit{Mixer2} could find one buffer on L1 one cache, while other buffer is \textit{always} placed on bank of L2 
 that is not shared by the cpu that has executed \textit{Mixer2}, therefore read latencies are very high, because data are placed on different dies. 
 On i7, instead, \textit{mixer2} could find one buffer in L1 cache and other buffer in L3 cache that is shared among all cores and it is inclusive, 
 therefore to read data is less expensive on i7.
@@ -481,32 +492,40 @@ As in the case of inclusion of dependency, it suffices to pass as parameter the 
 Thanks to these system calls, the scheduler "knows" which tasks have task-affinity and, in this way, it can schedule consumers after producers in order to 
 enforce reuse of cache memory.
 
-The task-affinity logic influences wake up and migration of a task. As we have previously seen, in \textit{try\_to\_wake\_up} the choice of cpu where to 
+The task-affinity logic influences wake up and migration of a task. As we have
+previously seen, in \textit{try\_to\_wake\_up} the choice of CPU where to 
 put the to be waken task is made by \texttt{select\_task\_rq\_rt} \ref{code:select_task}. This function is modified in this way: given the input task $p$, 
 the function doesn't call \texttt{find\_lowest\_rq} but it loops for all element present in the $p$'s \textit{taskaffinity list} and build a mask, called 
-\textit{affinity\_mask}, with cpus that have executed a task present in $p$'s \textit{taskaffinity\_list}. Finished the loop, the function returns the cpu 
-with the runqueue that has the lowest number of Real-Time tasks. Only if the mask is empty, the function calls \texttt{find\_lowest\_rq} to choose a cpu
+\textit{affinity\_mask}, with CPUs that have executed a task present in $p$'s
+\textit{taskaffinity\_list}. Finished the loop, the function returns the CPU 
+with the runqueue that has the lowest number of Real-Time tasks. Only if the
+mask is empty, the function calls \texttt{find\_lowest\_rq} to choose a CPU
 in the standard way. 
 
 In the current version of task-affinity, a task that "respect" task-affinity, that is a task that was enqueued according to its task-affinity 
 relationships, isn't able to migrate. In plain words, \texttt{push\_rt\_task} and \texttt{pull\_rt\_task} can't move tasks that "respect" task-affinity.
 
-The aim of this policy is clear: when a task wakes up, the policy tries to select the best cpu for that task and, if it finds it, it blocks the task on the 
+The aim of this policy is clear: when a task wakes up, the policy tries to
+select the best CPU for that task and, if it finds it, it blocks the task on the 
 best runqueue until the task's execution. For this reason the key point of this task-affinity logic is the \texttt{select\_task\_rq\_rt}. In the optimal 
-case, producers and consumers will be executed subsequenlty always on the same cpu.
+case, producers and consumers will be executed subsequently always on the same
+CPU.
 
-Nevertheless, in practice, the choosen cpu for $p$ is next to never the optimal cpu. The reason is very simple. The choice of the best 
-cpu, and the enqueuing of task are performed in different moments. When \texttt{select\_task\_rq\_rt} is called, it doesn't hold any lock. During the loop, 
-the function has to read what is the content of different runqueues present in the system, these reads are not synchronized. Once the cpu is selected, 
-\texttt{select\_task\_rq\_rt} returns and \texttt{try\_to\_wake\_up} \textbf{takes a lock} on the choosen runqueue, in order to call 
-\texttt{activate\_task} to perform the enqueuing of the task. From when \texttt{select\_task\_rq\_rt} selects the cpu to when the lock is taken, a task 
+Nevertheless, in practice, the chosen CPU for $p$ is next to never the optimal
+CPU. The reason is very simple. The choice of the best 
+CPU, and the enqueuing of task are performed in different moments. When \texttt{select\_task\_rq\_rt} is called, it doesn't hold any lock. During the loop, 
+the function has to read what is the content of different runqueues present in
+the system, these reads are not synchronized. Once the CPU is selected, 
+\texttt{select\_task\_rq\_rt} returns and \texttt{try\_to\_wake\_up} \textbf{takes a lock} on the chosen runqueue, in order to call 
+\texttt{activate\_task} to perform the enqueuing of the task. From when
+\texttt{select\_task\_rq\_rt} selects the CPU to when the lock is taken, a task 
 with equal or higher priority than $p$'s priority can be inserted in the selected runqueue and, in this way, the next task that will be executed won't be 
 $p$. 
 
 The current version of task-affinity ensures only weak concept of temporal locality because it doesn't ensure, when it is possible, that the next task 
 executed after a producer is a consumer. Another problem of the current version of task-affinity is the migration policy. It is not very flexible. Pull 
-and push functions mantain the system balanced, and guarantee that every cpu executes always the higher priority Real-time task present in its runqueue.
-Therefore, the denial to pull and push can improve predictability of the application and can degrade singnificantly the throughput of the application.
+and push functions maintain the system balanced, and guarantee that every CPU executes always the higher priority Real-time task present in its runqueue.
+Therefore, the denial to pull and push can improve predictability of the application and can degrade significantly the throughput of the application.
 Predictability is an important aspect for Real-time systems, but if we have a very bad throughput we don't exploit the potentiality of multicore platforms.
 
 The aim of the patch developed in this thesis is to improve the concept of temporal locality in order to execute a consumer immediately after a 
@@ -529,18 +548,20 @@ The implemented logic to improve temporal locality is divided in the following p
 
 \item[last\_tsk field] To ensure that a consumer will be the next executed task after a producer, it is necessary to change what 
 \texttt{select\_task\_rq\_rt} "sees". As I previously said, during its loop, \texttt{select\_task\_rq\_rt} checks for CPUs that \textbf{have executed} a 
-task in $p$'s \textit{taskaffinity list}. It means that, in that moment, those cpus could be executing a task that is not a producer and such, the L1 cache 
+task in $p$'s \textit{taskaffinity list}. It means that, in that moment, those
+CPUs could be executing a task that is not a producer and such, the L1 cache 
 could already be dirty. For this reason, at each runqueue was added a field named \texttt{last\_tsk} that contains the last task executed in a runqueue. 
 This field is updated at each context switch if the next task to be executed is different from idle. In this way, if current task on runqueue is not idle, 
 this field represents, the task in execution. With this additional field, \texttt{select\_task\_rq\_rt} "knows" which is the task currently executing on 
-each runqueue. In this way, cpus that during \texttt{select\_task\_rq\_rt} are executing a task that is not in $p$'s \textit{taskaffinity\_list} are not 
+each runqueue. In this way, CPUs that during \texttt{select\_task\_rq\_rt} are executing a task that is not in $p$'s \textit{taskaffinity\_list} are not 
 inserted in \texttt{affinity\_mask}.
 
-\item[enqueue on head] This change is not enough. Consider this situation: two different cpus that we call CPU\_A and CPU\_B are executing two different 
-istances of \texttt{try\_to\_wake\_up}. Respectively, they are called for task $p$ and task $q$: the former has task-affinity relationship, the latter is 
+\item[enqueue on head] This change is not enough. Consider this situation: two
+different CPUs that we call CPU\_A and CPU\_B are executing two different 
+instances of \texttt{try\_to\_wake\_up}. Respectively, they are called for task $p$ and task $q$: the former has task-affinity relationship, the latter is 
 a generic Real-time task, both tasks have the same priority. Suppose that the current task on CPU\_A is a task in $p$'s \textit{taskaffinity list} and then 
 \texttt{select\_task\_rq\_rt} choose CPU\_A for $p$. Suppose that \texttt{try\_to\_wake\_up} that wakes up $q$ chooses CPU\_A and enqueue task $q$ on the 
-runqueue of CPU\_A. Task $p$ is not yet enqueued, therefore when it will be enqueued, it will be preceeded by $q$ and then the next task that will
+runqueue of CPU\_A. Task $p$ is not yet enqueued, therefore when it will be enqueued, it will be preceded by $q$ and then the next task that will
 be executed on CPU\_A is $q$.
 
 \begin{figure}[htbp]
@@ -568,9 +589,11 @@ all task enqueued on that CPU during \textit{select\_task\_rq\_rt}.
 task-affinity is enqueued. In this case, the next task to execute won't be the task with task-affinity.
 To resolve this problem, migration mechanism is used. When the \texttt{try\_to\_wake\_up} has enqueued task $p$ it calls function \texttt{task\_woken} in 
 order to checks if $p$ can be immediately executed on the selected runqueue or not. If on the runqueue there is a task with priority equal or higher than 
-the $p$'s priority and this task precedes $p$, \texttt{push\_rt\_task} is called and $p$ can be pushed on another cpu. To select the cpu where to push $p$, 
+the $p$'s priority and this task precedes $p$, \texttt{push\_rt\_task} is called
+and $p$ can be pushed on another CPU. To select the CPU where to push $p$, 
 the same mechanism used in \texttt{select\_task\_rq\_rt} is adopted. Therefore, $p$ will be pushed where it is in execution a task in $p$'s 
-\textit{taskaffinity\_list}, if it is impossible standard push criteria are adopted and $p$ will be pushed on a cpu that executing a task with lower 
+\textit{taskaffinity\_list}, if it is impossible standard push criteria are
+adopted and $p$ will be pushed on a CPU that executing a task with lower 
 priority than $p$. Obviously, in order to push a task that "respect" task-affinity, it is necessary insert it in a \textit{pushable list}. 
 
 \end{description}

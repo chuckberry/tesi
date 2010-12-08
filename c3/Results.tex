@@ -1,6 +1,5 @@
-In this chapter I will show the behaviour of task-affinity on different architectures. First of all, using \textit{gtkwave}, a tool that show in a 
-graphic way the scheduling performed, we will check if the expected scheduling is performed. After which we will analyze how the optimization proposed 
-influences performance and L1 and LLC miss rates of the application. 
+In this chapter I will show the behaviour of task-affinity on different architectures. First of all, we will check if the expected scheduling is performed. 
+After which we will analyze how the optimization proposed influences performance and L1 and LLC miss rates of the application. 
 
 In Fig. \ref{fig:ideal_scheduling} the ideal scheduling that vanilla and the developed patch should perform are represented.
 I have said "ideal" because, as described in \cite{lcs}, it is impossible to perform exactly these scheduling, because scheduling latencies are not equal 
@@ -43,7 +42,7 @@ scheduling improves throughput of the application. The improvement of throughput
 the theoretical speedup given by task-affinity, executing the following experiment:
 
 \begin{enumerate}
-\item We have executed benchmark with only one cpu online using different buffer dimensions. In this way, benchmark is executed in a serialized way.
+\item We have executed benchmark with only one CPU online using different buffer dimensions. In this way, benchmark is executed in a serialized way.
 \item We have recorded average execution time of each thread of the benchmark, and the average execution time of a sample.
 \item We have divided the serial execution of benchmark in different portions according to parallelization factor. For vanilla, we have three portions: 
 $P_{0}$ that includes the sum of execution time of \textit{mixer0} and \textit{mixer1}, $P_{1}$ that includes the sum of execution time of \textit{waves}, 
@@ -58,11 +57,11 @@ With these approximations, the scheduling performed by task-affinity can be appr
 portions: $P_{0}$ includes the sum of execution time of \textit{mixer0} and \textit{mixer1}, it has a parallelization factor of $S_{0} = 2$. $P_{1}$ 
 includes three \textit{waves} and the portion of \textit{mixer2} that is executed concurrently with three \textit{waves}. $P_{1}$ has a parallelization 
 factor of $S_{1} = 4$. $P_{2}$ includes the \textit{wave} not yet executed and the portion of \textit{mixer2} that is executed concurrently with 
-\textit{wave}. $P_{2}$ has a parallelization factor of $S_{2} = 2$, Fig. \ref{fig:ideal_scheduling}. Note that this subdivision is indipendent by the 
+\textit{wave}. $P_{2}$ has a parallelization factor of $S_{2} = 2$, Fig. \ref{fig:ideal_scheduling}. Note that this subdivision is independent by the 
 buffer dimension used.
 
 \item We have determined to which percentage of the serial execution each portion corresponds. Since we have a serial execution for each buffer dimension 
-used, we have different percentages for each portion, for example: $P_{0}$ could be corresponds to $35\%$ on the exectuion with 4KB, $34\%$ on the execution 
+used, we have different percentages for each portion, for example: $P_{0}$ could be corresponds to $35\%$ on the execution with 4KB, $34\%$ on the execution 
 with 8KB and so on. For this reason, for each portion, we have calculated the average percentage.
 
 \end{enumerate}
@@ -72,7 +71,7 @@ to investigate which is the overhead that \textit{pull\_rt\_task} and \textit{pu
 Intel i7.
 
 %----------------------------------------------------------------------------------
-\subsection{Consideration on exeperimental results}
+\subsection{Consideration on experimental results}
 
 \begin{description}
 
