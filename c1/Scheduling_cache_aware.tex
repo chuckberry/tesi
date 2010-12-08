@@ -5,7 +5,7 @@ system performance. The last section of the chapter propose an overview of the m
 is given a briefly description, some example that explain how to implement it and advatages and drawbacks of the policy.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Problems due to an incorrect use of cache}
+\section{Issues due to an incorrect use of cache}
 \label{sec:s1}
 
 In most multicore platforms, different cores share onchip caches, usually is L2 or L3 cache. Recent research works show how an unfair cache sharing
@@ -15,13 +15,13 @@ Most simply, they balance the load across processor by migrating task to keep th
 in a given timeslice, resource sharing uniformly impacts the rates of progress of all the co-scheduled threads.
 Unfortunately this assumption is often unmet because how much cache space a thread may use is determined by threads with which it is co-scheduled.
 
-An interesting activity developed by S. Kim et al. shows the impact of an unfair cache sharing on performance and how this phenomena is dependent by
+An interesting activity developed by S. Kim et al.TODO cita shows the impact of an unfair cache sharing on performance and how this phenomena is dependent by
 co-scheduled threads. In Figure \ref{fig:gzip_miss} we can see one of results is provided by that work.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/chandra_gzip}
-\caption{\figurecaption{gzip miss rate}}
+\caption{\figurecaption{gzip miss rate TODO cita}}
 \label{fig:gzip_miss}
 \end{figure}
 
@@ -254,7 +254,7 @@ The latter type is focused on cache reusability. These policies schedule tasks t
 %-----------------------------------------------------------------------------
 \subsection{Data locality policies} 
 
-These policies are focused on the use of Last Level shared Cache (LLC) made by scheduled tasks. They can be used both for Real-time and Fair tasks. 
+These policies are focused on the use of Last Level Cache (LLC) made by scheduled tasks. They can be used both for Real-time and Fair tasks. 
 They don't take care about core-local cache (usually L1) or other shared resources like interconnects. In literature, data locality is the most developed 
 type of cache aware policies, because they can be integrated in every OS and are relatively simple policies to develop. Now I will show two examples of 
 data locality policies and how they are implemented.
@@ -495,11 +495,12 @@ scheduled tasks could reuse the data accessed by the current tasks at the schedu
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=\widefigure]{images/cosched_permutation.eps}
-\caption{\figurecaption{task permutation}}
+%\includegraphics[width=6cm,height=cm, keepaspectratio]{images/cosched_permut.eps}
+\includegraphics[width=\widefigure]{images/cosched_permut.eps}
+\caption{\figurecaption{Data accessed by possible permutations of co-scheduled tasks. In the right figure co-scheduled tasks with green or red squares won't
+reuse data, because current co-scheduled tasks don't access to red or green squares}}
 \label{fig:cosched_permutation}
 \end{figure}
-
 
 In figure \ref{fig:cosched_permutation} each square represents the data set used by a scheduled task, squares with different colours represent different 
 data set. In case (a), four tasks are co-scheduled and they access to four different data sets. In the case (b) four co-scheduled tasks access to only two 
@@ -531,8 +532,35 @@ see fig. \ref{fig:possible_cosched}.
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=\widefigure]{images/possible_cosched.eps}
-\caption{\figurecaption{possible coschedule for a task j, in this case task A}}
+{
+\psfrag{Q1}{$Q_{1}$}
+\psfrag{Q2}{$Q_{2}$}
+\psfrag{Q3}{$Q_{3}$}
+\psfrag{Q4}{$Q_{4}$}
+\psfrag{Q5}{$Q_{5}$}
+\psfrag{W5}{$W_{5}$}
+\psfrag{W4}{$W_{4}$}
+\psfrag{W3}{$W_{3}$}
+\psfrag{W2}{$W_{2}$}
+\psfrag{W1}{$W_{1}$}
+\psfrag{T5}{$T_{5}$}
+\psfrag{T4}{$T_{4}$}
+\psfrag{T3}{$T_{3}$}
+\psfrag{T2}{$T_{2}$}
+\psfrag{T1}{$T_{1}$}
+\psfrag{D5}{$D_{5}$}
+\psfrag{D4}{$D_{4}$}
+\psfrag{D3}{$D_{3}$}
+\psfrag{D2}{$D_{2}$}
+\psfrag{D1}{$D_{1}$}
+\psfrag{SG0}{$SG_{0}$}
+\psfrag{SG3}{$SG_{3}$}
+\psfrag{SG2}{$SG_{2}$}
+\psfrag{SG1}{$SG_{1}$}
+\includegraphics[width=8cm,height=10cm, keepaspectratio]{images/possible_cosched.eps}
+}
+%\includegraphics[width=\widefigure]{images/possible_cosched.eps}
+\caption{\figurecaption{Example of how sharing groups can be assigned to different CPUs. A possible coschedule is: $PS_{j} = \{Q_{1}; T_{1}; W_{1} D_{1}\}$}}
 \label{fig:possible_cosched}
 \end{figure}
 

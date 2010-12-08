@@ -166,9 +166,9 @@ In this section I will briefly describe machines and the benchmark used to test 
 
 \begin{figure}[htbp]
  \centering%
- \subfigure[Machine A: Intel Xeon E5440 \label{fig:i7}]%
+ \subfigure[Machine A: Intel Xeon E5440 \label{fig:Xeon}]%
   {\includegraphics[width=6cm,height=8cm, keepaspectratio]{images/Xeon.eps}} \qquad\qquad
- \subfigure[Machine B: Intel i7 870 \label{fig:Xeon}]%
+ \subfigure[Machine B: Intel i7 870 \label{fig:i7}]%
   {\includegraphics[width=6cm,height=8cm, keepaspectratio]{images/i7.eps}}
  \caption{\figurecaption{Cache configurations on computers used in this work. Those with D\$ are data cache, those with I\$ are instruction caches and 
 the others are unified, that is, cache serves to data and instructions.
@@ -177,10 +177,11 @@ the others are unified, that is, cache serves to data and instructions.
 
 \begin{description}
 \item[Machine A] The first machine is an Intel Xeon E5440 running at 2.83GHz. There is not any cache shared among all cores. The LLC consists in two 
-big L2-caches, of 6MB each, shared between sets of 2 cores cache hierarchy is shown in Fig TODO
+big L2-caches, of 6MB each, shared between sets of 2 cores cache hierarchy is shown in Fig. \ref{fig:Xeon}. On this machine there are two dies: CPU0 and 
+CPU1 are on the same die, while other CPUs are on other die.
 
-\item[Machine B] The second machine is an Intel Core i7 870 processor. It runs at 2.93 GHz and has the cache configuration as illustrated in Fig. TODO
-The LLC consists in one L3 of 8MB, which is shared by all cores. The L2-caches are private to each processor. 
+\item[Machine B] The second machine is an Intel Core i7 870 processor. It runs at 2.93 GHz and has the cache configuration as illustrated in Fig. 
+\ref{fig:i7}. The LLC consists in one L3 of 8MB, which is shared by all cores. The L2-caches are private to each processor. All CPUs are on the same die.
 
 \end{description}
 
@@ -286,14 +287,14 @@ Xeon and i7.
  \centering
   \includegraphics[width=\widefigure]{images/cache_miss/l1_load_store_Xeon.eps}
   \label{fig:l1_load_store_Xeon}
- \caption{\figurecaption{percentage of read and write misses on Xeon}}
+ \caption{\figurecaption{Cache miss rate of read and write instructions on Xeon}}
 \end{figure}
 
 \begin{figure}[htbp]
  \centering
   \includegraphics[width=\widefigure]{images/cache_miss/l1_load_store_i7.eps}
   \label{fig:l1_load_store_i7}
- \caption{\figurecaption{percentage of read and write misses on i7}}
+ \caption{\figurecaption{Cache miss rate of read and write instructions on i7}}
 \end{figure}
 
 On Intel Xeon read and write miss rates are increased and, consequently, predictability is degradated.
@@ -356,7 +357,6 @@ the second run only waves are pinned and mixers can migrate, Tab.\ref{tab:assign
 \label{tab:assignment}
 \caption{CPUs assignment}
 \end{table}
-TODO in didascalia metti la percentuale di quanto differiscono
 
 What we expect with all tasks pinned and with buffer less than 32KB is a decrease of L1 read and write miss rates and a reduction of accesses to LLC. 
 With dimensions greater than 32KB, the buffers can't be loaded entirely in L1 cache, therefore we don't know effect on L1 miss rates. Anyway LLC miss 
@@ -545,8 +545,9 @@ be executed on CPU\_A is $q$.
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=\widefigure]{images/enq_head.eps}
-\caption{\figurecaption{Enqeue on head}}
+\includegraphics[width=10cm,height=12cm, keepaspectratio]{images/enq_head.eps}
+%\includegraphics[width=\widefigure]{images/enq_head.eps}
+\caption{\figurecaption{Enqueue on head}}
 \label{fig:enq_head}
 \end{figure}
 
@@ -568,7 +569,7 @@ task-affinity is enqueued. In this case, the next task to execute won't be the t
 To resolve this problem, migration mechanism is used. When the \texttt{try\_to\_wake\_up} has enqueued task $p$ it calls function \texttt{task\_woken} in 
 order to checks if $p$ can be immediately executed on the selected runqueue or not. If on the runqueue there is a task with priority equal or higher than 
 the $p$'s priority and this task precedes $p$, \texttt{push\_rt\_task} is called and $p$ can be pushed on another cpu. To select the cpu where to push $p$, 
-the same mechanism used in \texttt{select\_task\_rq\_rt} is adopted. Therefore, $p$ will be pushed where it is in execution a task in $p$'s TODO correz. 
+the same mechanism used in \texttt{select\_task\_rq\_rt} is adopted. Therefore, $p$ will be pushed where it is in execution a task in $p$'s 
 \textit{taskaffinity\_list}, if it is impossible standard push criteria are adopted and $p$ will be pushed on a cpu that executing a task with lower 
 priority than $p$. Obviously, in order to push a task that "respect" task-affinity, it is necessary insert it in a \textit{pushable list}. 
 
@@ -594,10 +595,4 @@ structures of the exiting task, for this reason another layer of synchronization
 named \textit{taskaff\_lock} to protect its task-affinity data structures. 
 
 \end{description}
-
-%In figure are represented the two step of sycnhronization. In step (a) syscalls try to acquire \textit{tasklist\_lock} in order to avoid to access to a 
-%\textit{taskaffinity list} of an exiting task. In step (b) all functions that want to access to task-affinity data structure of a certain task, must 
-%acquire the \textit{taskaff\_lock} that protect those structures. A read-write lock was choosen because reads on task-affinity data structures are 
-%most frequently than writes. Reads are performed by \texttt{select\_task\_rq\_rt} while writes are executed only by the syscalls and 
-%\texttt{task\_affinity\_notify\_exit}.
 
