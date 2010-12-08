@@ -77,34 +77,30 @@ they don't cause cache trashing. These works are not effective as COOL project, 
 LITMUS \footnote{It is a Linux-based testbed developed by them that supports multiprocessor real-time scheduling policies within Linux} benchmarks, 
 furthermore this kind of works was experimented with good outcome also in embedded systems.
 
-
 \section{Objectives of this thesis work}
 \label{sec:ObjectiveOfThesis}
 
-Lo scopo principale di questa tesi \'e l' ottimizzazione della versione attuale della task-affinity. In un primo passo, analizzeremo come la task-affinity 
-si comporta su diverse architetture multicore; in particolare sull' Intel Xeon E5440 e sull'Intel i7 870. Queste due architetture sono state scelte
-perch\'e hanno una architettura delle cache molto diversa tra di loro e inoltre, anche il sistema di comunicazione tra chip \'e molto diverso in termini
-di prestazioni. Con l'analisi che si vuole eseguire, cercheremo di capire quali sono gli aspetti dell'attuale logica della task-affinity da migliorare per
-poter sfruttare al meglio le architetture testate, per esempio: attualmente, come descritto in \cite{lcs}, la politica di migration effettuata non \'e 
-molto efficace, perch\'e alcuni task tendono a rimbalzare da una CPU all'altra, ad ogni iterazione del benchmark. Crediamo che questo fenomeno degradi
-le peformance ottenibili con la task-affinity, perch\'e spesso un task che migra deve anche eseguire il warm up della cache della CPU su cui esso \'e
-migrato, e questo aumenta il miss rate. Quello che ci aspettiamo \'e che l'analisi metta in luce, per ogni architettura, quanto questo "migration pattern" 
-incida sul miss rate di un task.
+The main goal of this thesis is the optimization of the current version of task-affinity. In a first step, we will analyze the behaviour of task-affinity
+on different multicore architectures, in particular on Intel Xeon E5440 and on Intel i7 870. These architectures have two different cache architectures, 
+furthermore also they have a different inter-chip communications system. With this analysis, we will find which are the aspects of task-affinity logic to 
+improve in order to make the most of task-affinity on tested architectures, for example: in the current version of task-affinity, 
+as described in \cite{lcs}, the migration policy is not very effective, because some task bounce from two CPUs at each iteration of benchmark. We believe
+that this issue degrades obtainable performance with task-affinity, because a task that migrates has to warm up the cache of CPU on which it has migrated, 
+increasing miss rate. We expect that this analysis put in evidence, for each architecture, what is the incidence of this "migration pattern" on miss rates.
 
-Tenendo conto dei risultati presentati nella fase di analisi, proporremo un' ottimizzazione volta a migliorare la localit\'a temporale dei dati, in modo da
-diminuire il miss rate di un task; per fare ci\'o includeremo nella logica della task-affinity anche le funzioni usate per la migrazione dei task. 
-Nell'ultima parte dell\'ottimizzazione introdurremo la sincronizzazione per le strutture dati usate nella task-affinity. Tutte le misure effettuate sulla 
-task-affinity e sul vanilla sono state eseguite usando il benchmark used in \cite{lcs}.
+According to results obtained in the analysis phase, we will try to enforce the temporal locality of data, in order to diminish miss rate of the tasks. To 
+do this, we will include in the task-affinity logic functions used by kernel to perform migration of tasks. In the last part of the optimization, we will 
+synchronize the structures used in task-affinity. All measures executed on task-affinity and on vanilla were effectuated using benchmark developed in 
+\cite{lcs}.
 
-Quindi gli obbiettivi di questa tesi possono essere riassunti come:
+Therefore the objectives of this thesis can be summarized as:
 
 \begin{enumerate}
-\item analizzare il comportamento dell'attuale versione della task-affinity su diverse archietture per capire quali aspetti migliorare.
-\item ottimizzare la versione attuale della task-affinity, migliorando la politica di migrazione dei task e migliorando la localit\'a temporale dei dati 
-garantita dalla task-affinity.
+\item Analyze the behaviour of the current version of task-affinity on different architectures in order to understand which aspects to improve.
+\item Optimize the current version of task-affinity, improving the migration policy and improving the temporal locality of data guaranted by task-affinity.
 \end{enumerate}
 
-Tutte le patch sviluppate in questa tesi si basano sulla versione 2.6.34 del kernel Linux. 
+All changes performed on Linux kernel are based on version 2.6.34 of the vanilla kernel
 
 \section{Organization of the thesis}
 \label{sec:OrganizationThesis}
@@ -112,20 +108,16 @@ Tutte le patch sviluppate in questa tesi si basano sulla versione 2.6.34 del ker
 \begin{description}
 
 \item [Chapter 2:] we first discuss the issues due to an incorrect use of cache. We will see how an unfair cache sharing may degrade performance and 
-higly reduce the determinism of applications.
+greatly reduce the determinism of applications. A survey of cache architectures is presented paying attention to those architectural details that often 
+are not well documented, such as: cache coherency protocols, inclusive or exclusive cache etc. In the last section, a classification of recently cache 
+aware scheduling algorithms is presented paying attention to advantages and drawbacks involved by each algorith analyzed.
 
-A survey of scheduling algorithms for real-time tasks used in various
-Operating Systems is presented paying attention to those already imple-
-mented in Linux and those that may be present in a near future. The
-last section shows some metrics used by developers of real-time systems
-to quantify performance and determinism.
- 
+\item [In Chapter 3:] we discuss the optimization implemented in this work. The first part is an anlysis of the behaviour of task-affinity on different 
+architectures, in order to understand how task-affinity can be optimized. Then, the following sections detail its implementation in Linux.
 
-\item [Chapter 3:]
-
-\item [Chapter 4:] presents the experimental results regarding the correct behavior of the solution and the improvements in respect to current version of
+\item [Chapter 4:] we presents the experimental results regarding the correct behavior of the solution and the improvements in respect to current version of
 task-affinity.
 
-\item [In Chapter 5:] we draw the conclusions on the work summarizing achieved results and proposing possible future development
+\item [ Chapter 5:] we draw the conclusions on the work summarizing achieved results and proposing possible future development
 
 \end{description}

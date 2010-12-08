@@ -166,11 +166,13 @@ In this section I will briefly describe machines and the benchmark used to test 
 
 \begin{figure}[htbp]
  \centering%
- \subfigure[Machine A \label{fig:i7}]%
+ \subfigure[Machine A: Intel Xeon E5440 \label{fig:i7}]%
   {\includegraphics[width=6cm,height=8cm, keepaspectratio]{images/Xeon.eps}} \qquad\qquad
- \subfigure[Machine B \label{fig:Xeon}]%
+ \subfigure[Machine B: Intel i7 870 \label{fig:Xeon}]%
   {\includegraphics[width=6cm,height=8cm, keepaspectratio]{images/i7.eps}}
- \caption{\figurecaption{TODO}}
+ \caption{\figurecaption{Cache configurations on computers used in this work. Those with D\$ are data cache, those with I\$ are instruction caches and 
+the others are unified, that is, cache serves to data and instructions.
+ }}
 \end{figure}
 
 \begin{description}
@@ -179,8 +181,6 @@ big L2-caches, of 6MB each, shared between sets of 2 cores cache hierarchy is sh
 
 \item[Machine B] The second machine is an Intel Core i7 870 processor. It runs at 2.93 GHz and has the cache configuration as illustrated in Fig. TODO
 The LLC consists in one L3 of 8MB, which is shared by all cores. The L2-caches are private to each processor. 
-
-\item[Machine C] TODO
 
 \end{description}
 
@@ -222,13 +222,9 @@ buffer dimensions.
 
 In the following experiments only the Intel Xeon and Intel i7 architectures are considered, because their cache architectures are similar in structure.
 These architectures differing in inter-chip communication, the former uses Quick-path Interconnect (QPI) the latter uses Hyper-transport (HT). 
-Furthermore, Intel i7 uses an inclusive LLC with MESIF protocol, while AMD Opteron use an exclusive LLC with MOESI protocol. To observe how these 
-factors impact on task-affinity a complex analysis would be required and this is not the goal of this thesis. 
-Furthermore, AMD Opteron uses a different policy from that used by Intel i7 to measure L1 and LLC cache misses, in fact AMD Opteron doesn't allow to 
-measure read and write misses separately: there is an unique event that allows to measure the sum of L1 write and read misses. The same goes for LLC cache 
-misses, also in that case it possible measure only the sum of LLC write and read misses. Since we have the need to measure write and read misses separately, 
-AMD Opteron is not suitable to analyze task-affinity.
-
+Furthermore, Intel i7 uses an inclusive LLC with MESIF protocol. To observe how these factors impact on task-affinity a complex analysis would be required 
+and this is not the goal of this thesis.
+ 
 %-----------------------------------------------------------------------------
 \subsection{Application's performance}
 

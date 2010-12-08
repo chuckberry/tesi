@@ -169,7 +169,7 @@ preferred over an exclusive cache, because it simplifies the problem of cache co
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/neh_amd.eps}
-\caption{\figurecaption{AMD Shanghai and Intel Nehalem}}
+\caption{\figurecaption{AMD Shanghai and Intel Nehalem \cite{molka}}}
 \label{fig:neh_amd}
 \end{figure}
 
@@ -181,7 +181,7 @@ In the table \ref{fig:tab_lat} read latencies recorded during test are showed.
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/tab_lat.eps}
-\caption{\figurecaption{read latencies}}
+\caption{\figurecaption{read latencies \cite{molka}}}
 \label{fig:tab_lat}
 \end{figure}
 
@@ -205,10 +205,10 @@ A \textit{Modified} state it's the only state that allow to avoid access to main
 QPI/HT data transfer. We will see that cache coherence protocol influence this type of latencies.
 
 \textbf{Nehalem:} Thanks to inclusive cache, the access to unmodified data is fast. Latency for \textit{Exclusive} cache line include a snoop of one core 
-(63 ns), \textit{Shared} cache line don't require snoop (58 ns). Moreover, latency for \textit{Modified} lines is higher (> 100 ns), becasue the MESIF 
+(63 ns), \textit{Shared} cache line don't require snoop (58 ns). Moreover, latency for \textit{Modified} lines is higher ($> 100 ns$), becasue the MESIF 
 protocol requires a write back to the main memory.
 
-\textbf{Shanghai:} Cache lines in \textit{Shared} state are fetched from main memory (> 99 ns), L3 can satisfies request for \textit{Exclusive} cache lines 
+\textbf{Shanghai:} Cache lines in \textit{Shared} state are fetched from main memory ($> 99 ns$), L3 can satisfies request for \textit{Exclusive} cache lines 
 (83 ns). Cache line in \textit{Modified} state can be forwarded to the requesting core from all cache levels, furthermore, thanks to MOESI protocol, a 
 modified cache line in the remote cache can switch to the Owned state and avoid to be written back to main memory.
 
@@ -303,9 +303,10 @@ A thread $J_k$ is scheduled for execution if:
 \psfrag{J14}{$J_{4}^1$}
 \psfrag{J21}{$J_{1}^2$}
 \psfrag{J23}{$J_{3}^2$}
-\includegraphics[width=\widefigure]{images/schedule.eps}
+\includegraphics[width=8cm,height=10cm, keepaspectratio]{images/schedule.eps}
+%\includegraphics[width=\widefigure]{images/schedule.eps}
 }
-\caption{\figurecaption{Example of scheduling performed by cache aware policy}}
+\caption{\figurecaption{Example of scheduling performed by Cache aware Fixed priority policy}}
 \label{fig:sched_example}
 \end{figure}
 
@@ -334,7 +335,7 @@ increases priority, of the thread with the smallest WSS, in this way threads on 
 The algortihm uses two separate run queues for eligible threads: the former is EDF-ordered, the latter is a "promotion" queue. In this queue, threads are ordered
 from smallest to largest WSS. The thread in front of this queue is "promoted", that is its priority was increased and, for this reason, it remains at the front
 of the queue and it will be the next task to execute. If there are tardy threads, they are inserted in EDF-ordered queue and they are scheduled according to 
-EDF policy. The EDF-ordered queue contains task that have higher priority than tasks inserted in "promotion queue" TODO dai nomi a queste code.
+EDF policy. The EDF-ordered queue contains task that have higher priority than tasks inserted in promotion queue.
 When the heuristic picks a task from promotion queue, it checks if it will cause cache thrashing. For this reason, the scheduler mantains a variable with 
 the total amount of the WSSs allocated, that is the cache space allocated. If this value plus the WSS of the thread to schedule exceeds the cache space size, 
 thrashing will occur. In this case, the core remains idle and the thread waits for some thread that free cache resources.
@@ -342,8 +343,9 @@ Obiouvsly task priorities are respected, it means that a task with the smallest 
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=\widefigure]{images/edf_wss.eps}
-\caption{\figurecaption{queues used in the algorithm}}
+\includegraphics[width=8cm,height=10cm, keepaspectratio]{images/edf_wss.eps}
+%\includegraphics[width=\widefigure]{images/edf_wss.eps}
+\caption{\figurecaption{Queues used in the algorithm: tasks in "EDF-ordered" queue are ordered by their deadline, tasks in "promotion" queue are ordered by the size of their WSS. Tasks in EDF-ordered queue have priority greater than priority of the tasks in promotion queue.}}
 \label{fig:edf_wss}
 \end{figure}
 
@@ -360,27 +362,28 @@ space. To understand why, it is necessary to remind some consideration about cac
 in cache for the new entry to load. The heuristic that decide which is the entry to evict is called the replacement policy. According to replacement policy,
 cache memory are classified in:
 
-TODO img da mettere
 \begin{description}
-\item direct-mapped: a line in main memory can be placed only in one cache line. There is an 1:1 relationship between main memory and cache memory.
-\item fully associative: a line in main memory can be placed in any cache line. There is a 1:N relationship between main memory and cache memory.
-\item N-way set associative: it is a trade-off between direct-mapped and fully associative. Cache memory is divided in set, each set can contain N cache 
+\item [Direct-mapped:] a line in main memory can be placed only in one cache line. There is an 1:1 relationship between main memory and cache memory.
+\item [Fully associative:] a line in main memory can be placed in any cache line. There is a 1:N relationship between main memory and cache memory.
+\item [N-way set associative:] it is a trade-off between direct-mapped and fully associative. Cache memory is divided in set, each set can contain N cache 
 line. A line in main memory can be present only in one specific set and within it, that line can be placed in any line that belong to that set.
 \end{description}
 
-The reason is simple: the WSSs of two threads could be overlapped. It is very difficult in practice having not-overlapping WSS. Furthermore, also 
-assuming true this hypotesis, 
+\begin{figure}[htbp]
+ \centering%
+ \subfigure[Cache Direct mapped \label{fig:direct_mapped}]%
+  {\includegraphics[width=6cm,height=8cm, keepaspectratio]{images/direct_cache.eps}} \qquad\qquad
+ \subfigure[Cache N-Way set associative \label{fig:n-way_assoc}]%
+  {\includegraphics[width=6cm,height=8cm, keepaspectratio]{images/n-way_cache.eps}}
+ \caption{\figurecaption{Example of replacement policy in Direct-mapped cache and in N-Way Set associative Cache}}
+\end{figure}
 
-TODO mettere le arch della cache
 
-, furthermore, also under hypotesis of non-overlapped WSSs, check on WSS is sufficient
-to prevent cache thrashing only if the cache is fully associative, because every line in main memory can be mapped on any cache line but, in a N-way 
-set associative cache, a line in main memory can be mapped only within a certain set. For this reason, if a task occupies cache line used by a co-scheduled 
-
-
-Considering this architecture detail, it is clear that check on WSS is sufficient to prevent cache thrashing only if the cache is fully associative, because every line in main memory can be mapped on any cache line but, in a N-way set associative cache, a line in main memory can be mapped only within a certain 
-set. For this reason, if a task occupies cache line used by a co-scheduled task, cache trashing will occcurs. Furthermore, there is another important 
-detail: we have assumed that non-overlapping WSS, but, in practice, this hypotesis is unlikely, therefore cache thrashing can occur also with a fully associative cache. Nervetheless, Calandrino et al. test their algorithm with Soft Real-Time multimedia application and, according to results showed 
+Considering this architecture detail, it is clear that a check on WSS is sufficient to prevent cache thrashing only if the cache is fully associative, 
+because every line in main memory can be mapped on any cache line but, in a N-way set associative cache, a line in main memory can be mapped only within a 
+certain set. For this reason, if a task occupies cache line used by a co-scheduled task, cache trashing will occcurs. Furthermore, there is another 
+important detail: we have assumed non-overlapping WSS, but, in practice, this hypotesis is unlikely, therefore cache thrashing can occur also with a 
+fully associative cache. Nervetheless, Calandrino et al. test their algorithm with Soft Real-Time multimedia application and, according to results showed 
 \cite{calandro}, it seems that this sub-optimal solution is quite effective, at least with this kind of applications.
 
 \textbf{\textit{Advantages and drawbacks}} This policy presents a clear drawback: it may waste resources. According to rules previously showed, if there 
@@ -409,20 +412,23 @@ they experience the fair IPC, that is the IPC that ensure the best overall perfo
 assigned to a task, in this way, each task always run as quickly as it would under fair cache allocation, regardless of how the cache is actually allocated.
 
 \begin{figure}[htbp]
-\centering
-\includegraphics[width=\widefigure]{images/fed_cases.eps}
-\caption{\figurecaption{queue used in the algorithm}}
-\label{fig:fed_cases}
+\centering%
+ \subfigure[ Real case: tasks don't share equally cache \label{fig:fed_case_a}]%
+  {\includegraphics[width=10cm,height=6cm, keepaspectratio]{images/fed_case_a.eps}}
+ \subfigure[ Ideal case: tasks share equally cache  \label{fig:fed_case_b}]%
+  {\includegraphics[width=10cm,height=6cm, keepaspectratio]{images/fed_case_b.eps}}
+ \subfigure[ Modified time slice to ensure equally sharing of cache  \label{fig:fed_case_c}]%
+  {\includegraphics[width=10cm,height=6cm, keepaspectratio]{images/fed_case_c.eps}}
+ \caption{\figurecaption{Example of how Fair cache sharing policy modifies timeslice to ensure fair cache sharing \cite{fedorova}}}
+ \label{fig:fed_cases}
 \end{figure}
-
 
 In figure \ref{fig:fed_cases} is represented what the alorithm tries to do. Each box corresponds to a task. The height of the box indicates the amount of
 cache allocated to the thread. The width of the box indicates the thread's CPU timeslice. The area of the box is proportional to the amount of work 
-completed by the thread. Stacked thread boxes indicate corunners. In situation (a) is represented the ideal case, where all tasks share equally 
-cache. In the case (b) is represented a real case where tasks don't share equally cache and, for this reason, Task A needs more CPU time to execute
-all its job. Case (c) represents how is possible to ensure fair cache sharing: Task A can't make forward progress, so CPU timeslice of task A is increased 
+completed by the thread. Stacked thread boxes indicate corunners. In the case (a) is represented a real case where tasks don't share equally cache and, for 
+this reason, Task A needs more CPU time to execute all its job. In situation (b) is represented the ideal case, where all tasks share equally 
+cache. Case (c) represents how is possible to ensure fair cache sharing: Task A can't make forward progress, so CPU timeslice of task A is increased 
 and, at the same time it decreases timeslice of task B to mantain balanced CPU sharing. This is what the algorithm does. 
-
 
 \textit{Mechanism and examples:} An implementation of this policy is developed by Fedorova et al. \cite{fedorova}. The algorithm is divided in two phases: 
 sampling and scheduling. During the sampling phase, the co-scheduler gathers performance data and uses it to estimate the task's fair miss rate. During the 
@@ -440,7 +446,7 @@ CPU timeslice.
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/fedorova.eps}
-\caption{\figurecaption{step of co-scheduler}}
+\caption{\figurecaption{step of co-scheduler \cite{fedorova}}}
 \label{fig:fedorova}
 \end{figure}
 
