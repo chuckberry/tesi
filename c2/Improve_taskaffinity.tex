@@ -256,10 +256,10 @@ current version of task-affinity in terms of predictability and throughput on di
 
 \begin{table}[htbp]
 \begin{center}
-\begin{tabular}{l|c|c|c}
+\begin{tabular}{|l|c|c|c|}
 	\hline
-	& Speedup \\ \hline
-	& Xeon & i7 \\ \hline
+	       & \multicolumn{2}{|c|}{Speedup} \\ 
+	       & Xeon    & i7     \\ \hline
 	$4KB$  & -1.89\% & 2.33\% \\ \hline
 	$8KB$  & -0.82\% & 6.42\% \\ \hline
 	$16KB$ & -0.31\% & 8.42\% \\ \hline
@@ -605,12 +605,12 @@ synchronized is \texttt{taskaffinity\_list}
 
 \begin{description}
 
-\item[Access from user space:] User can access to task-affinity data structures using syscalls \texttt{sched\_add\_taskaffinity}, and 
+\item[Access from user space:] the user space can access task-affinity data structures using syscalls \texttt{sched\_add\_taskaffinity}, and 
 \texttt{sched\_del\_taskaffinity}. These functions access the pid of the task received in input in synchronized way, by using the read-write lock
 tasklist\_lock that protects the kernel's internal task list. For this reason, at every moment, only one instance of these syscalls can modify the
 task-affinity data structure of a task.
 
-\item[Access from kernel space:] Here the situation is more complex. There are two functions that can access to task-affinity data structures, they are:
+\item[Access from kernel space:] here the situation is more complex. There are two functions that can access to task-affinity data structures, they are:\\
 \texttt{task\_affinity\_notify\_exit} and \texttt{select\_task\_rq\_rt}. The former function frees task-affinity data structures and is called when a 
 task is exiting. During this phase, all resources used by a task, pid included, are deallocated. Therefore, when \texttt{task\_affinity\_notify\_exit} is 
 called, \textit{tasklist\_lock} is acquired. This is not enough because in that moment \texttt{select\_task\_rq\_rt} could access the task-affinity data 
