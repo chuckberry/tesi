@@ -20,8 +20,8 @@ bib: $(SOURCE).bbl
 $(SOURCE).bbl : $(SOURCE).bib
 	latex $(SOURCE).tex
 	bibtex $(SOURCE)1
-	bibtex $(SOURCE)2
-	latex $(SOURCE).tex
+	#bibtex $(SOURCE)2
+	#latex $(SOURCE).tex
 
 report: $(SOURCE).pdf
 	pdffonts $< > fonts.log

@@ -6,7 +6,7 @@ In Fig. \ref{fig:ideal_scheduling} the scheduling that vanilla and the developed
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/schedule_van_taskaff.eps}
-\caption{\figurecaption{Ideal Scheduling performed by vanilla (left) and task-affinity (right).}}
+\caption{Ideal Scheduling performed by vanilla (left) and task-affinity (right).}
 \label{fig:ideal_scheduling}
 \end{figure}
 
@@ -156,8 +156,8 @@ very effective, in fact, with task-affinity, \textit{pull\_rt\_task} executes mo
 \begin{figure}[h]
   \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
   \lstinputlisting{pull_task.c}
-  \label{code:pull_task_code}
   \caption{A portion of the \texttt{pull\_rt\_task} method}
+  \label{code:pull_task_code}
 \end{figure}
 
 The explanation is simple: at line 1559, \texttt{pull\_rt\_task} checks for overloading runqueues. If in the system there 
@@ -200,10 +200,10 @@ buffer of 4KB because execution time of each thread is relatively small.
 %\caption{Comparison between task-affinity and vanilla on Intel Xeon and Intel i7}
 %\end{table}
 
-In conclusion, to get a sense of how task-affinity improves the performance of the benchmark, look at table \ref{tab:final_time_speedup_xeon}, where are reported 
-values of metric A2S (Eq. \ref{eq:metric_rt}) used to characterize how task-affinity improve throughput and predictability with respect to vanilla. As we 
-can see, task-affinity is well exploited by Intel i7, look at \ref{tab:final_time_i7}, while on Intel Xeon we have some advantage with buffer greater than 4KB. Speedups are calculated using
-Eq. \ref{eq:miss_rate} 
+In conclusion, to get a sense of how task-affinity improves the performance of the benchmark, look at table \ref{tab:final_time_speedup_xeon}, where are 
+reported values of metric A2S (Eq. \ref{eq:metric_rt}) used to characterize how task-affinity improve throughput and predictability with respect to vanilla.
+As we can see, task-affinity is well exploited by Intel i7, look at \ref{tab:final_time_speedup_i7}, while on Intel Xeon we have some advantage with buffer 
+greater than 4KB. A2S improvements are calculated using Eq. \ref{eq:miss_rate} 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Intel Xeon}
@@ -211,7 +211,7 @@ Eq. \ref{eq:miss_rate}
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/results_xeon/final_xeon.eps}
-\caption{\figurecaption{Scheduling performed by task-affinity on Intel Xeon.}}
+\caption{\figurecaption{Scheduling performed by new version of task-affinity on Intel Xeon.}}
 \label{fig:final_xeon}
 \end{figure}
 
@@ -246,11 +246,11 @@ time divided by sample time. ]%
 	\hline	
 	& \multicolumn{2}{|c|}{$P_{1}$} & \multicolumn{2}{|c|}{$P_{2}$} & \multicolumn{2}{|c|}{$P_{3}$} & \multicolumn{2}{|c|}{$P_{4}$} \\
   	       & va   & ta   & va   & ta   & va   & ta   & va & ta   \\ \hline
-	 $4KB$ & 40\% & 40\% & 33\% & 33\% & 26\% & 16\% & -- & 10\% \\ \hline
-	 $8KB$ & 39\% & 40\% & 33\% & 33\% & 26\% & 16\% & -- &  9\% \\ \hline
-	$16KB$ & 40\% & 40\% & 35\% & 36\% & 25\% & 18\% & -- &  7\% \\ \hline
-	$32KB$ & 40\% & 39\% & 37\% & 37\% & 24\% & 18\% & -- &  5\% \\ \hline
-	$64KB$ & 40\% & 40\% & 37\% & 37\% & 23\% & 18\% & -- &  4\% \\ \hline
+	 $4KB$ & 40\% & 40\% & 33\% & 33\% & 26\% & 17\% & -- &  9\% \\ \hline
+	 $8KB$ & 40\% & 40\% & 33\% & 33\% & 26\% & 17\% & -- &  9\% \\ \hline
+	$16KB$ & 40\% & 40\% & 35\% & 35\% & 25\% & 18\% & -- &  7\% \\ \hline
+	$32KB$ & 39\% & 39\% & 37\% & 37\% & 24\% & 19\% & -- &  5\% \\ \hline
+	$64KB$ & 40\% & 40\% & 37\% & 37\% & 23\% & 19\% & -- &  4\% \\ \hline
      $Average$ & 40\% & 40\% & 35\% & 35\% & 25\% & 18\% & -- &  7\% \\ \hline
 \end{tabular}
 \label{tab:portion_van_xeon}
@@ -261,7 +261,7 @@ time divided by sample time. ]%
 \begin{tabular}{|l|r|r|r|r|r|r|r|}
 	\hline
 	& \multicolumn{3}{|c|}{taskaff} & \multicolumn{3}{|c|}{vanilla} & A2S\\
-	      & avg    & var   & A2S    & avg    & var   & A2S    & Speedup \\ \hline
+	      & avg    & var   & A2S    & avg    & var   & A2S    & Improvement \\ \hline
 	$4KB$ & 63.08  & 44.7  & 76.45  & 61.58  & 12.42 & 68.63  & -11\%\\ \hline
 	$8KB$ & 90.6   & 24.18 & 100.43 & 95.54  & 20.31 & 104.55 & 4\%\\ \hline
        $16KB$ & 150.00 & 25.75 & 160.15 & 165.23 & 42.47 & 178.27 & 10\%\\ \hline
@@ -271,8 +271,8 @@ time divided by sample time. ]%
 \label{tab:final_time_xeon}
 }
 
+\caption{Data used to calculate speedups and A2S improvements of new version of task-affinity and vanilla on Xeon}
 \label{tab:final_time_speedup_xeon}
-\caption{Data used to calculate speedups of task-affinity and vanilla on Xeon}
 \end{table}
 
 According the showed data, Tab. \ref{tab:final_time_speedup_xeon}, it possible to estimate the average speedups for task-affinity and vanilla.
@@ -290,42 +290,42 @@ According the showed data, Tab. \ref{tab:final_time_speedup_xeon}, it possible t
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/results_xeon/time_avg_var_Xeon.eps}
-\caption{\figurecaption{Average and Variance of execution time of a sample on Xeon}}
+\caption{\figurecaption{Average and Std. Deviation of execution time of a sample on Xeon (new version of task-affinity)}}
 \label{fig:time_avg_var_xeon}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/results_xeon/migration_xeon.eps}
-\caption{\figurecaption{task migration on Xeon}}
+\caption{\figurecaption{task migration on Xeon (new version of task-affinity)}}
 \label{fig:migration_xeon}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/results_xeon/l1_load_store_xeon.eps}
-\caption{\figurecaption{L1 Read and Write misses on Xeon}}
+\caption{\figurecaption{L1 Read and Write misses on Xeon (new version of task-affinity)}}
 \label{fig:l1_load_store_xeon}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/results_xeon/l2_load_store_xeon.eps}
-\caption{\figurecaption{LLC Read and Write misses on Xeon}}
+\caption{\figurecaption{LLC Read and Write misses on Xeon (new version of task-affinity)}}
 \label{fig:l2_load_store_xeon}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/results_xeon/push_xeon.eps}
-\caption{\figurecaption{Average of execution time of a call to push\_rt\_task and number of call to push\_rt\_task on Xeon}}
+\caption{\figurecaption{Average of execution time of a call to push\_rt\_task and number of call to push\_rt\_task on Xeon (new version of task-affinity)}}
 \label{fig:push_xeon}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/results_xeon/pull_xeon.eps}
-\caption{\figurecaption{Average of execution time of a call to pull\_rt\_task and number of call to pull\_rt\_task on Xeon}}
+\caption{\figurecaption{Average of execution time of a call to pull\_rt\_task and number of call to pull\_rt\_task on Xeon (new version of task-affinity)}}
 \label{fig:pull_xeon}
 \end{figure}
 
@@ -336,7 +336,7 @@ According the showed data, Tab. \ref{tab:final_time_speedup_xeon}, it possible t
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/results_i7/final_i7.eps}
-\caption{\figurecaption{Scheduling performed by task-affinity.}}
+\caption{\figurecaption{Scheduling performed by new version of task-affinity.}}
 \label{fig:trace_i7}
 \end{figure}
 
@@ -355,7 +355,7 @@ Also in this case, according to recorded measurement the estimated average speed
 \label{eq:speedup_i7_van}
 \end{equation}
 
-\begin{table}[tbp]
+\begin{table}[htbp]
 \centering%
 \subfigure[ Average of execution times of each task on serialized execution (us). The speedups for parallel execution are computed as: serialized execution 
 time divided by sample time. ]%
@@ -381,11 +381,11 @@ time divided by sample time. ]%
 	\hline	
 	& \multicolumn{2}{|c|}{$P_{1}$} & \multicolumn{2}{|c|}{$P_{2}$} & \multicolumn{2}{|c|}{$P_{3}$} & \multicolumn{2}{|c|}{$P_{4}$} \\
   	       & va   & ta   & va   & ta   & va   & ta   & va & ta   \\ \hline
-	 $4KB$ & 35\% & 35\% & 47\% & 47\% & 18\% & 14\% & -- & 7\% \\ \hline
-	 $8KB$ & 33\% & 33\% & 48\% & 48\% & 19\% & 14\% & -- & 7\% \\ \hline
-	$16KB$ & 32\% & 32\% & 49\% & 49\% & 18\% & 12\% & -- & 6\% \\ \hline
-	$32KB$ & 31\% & 31\% & 51\% & 51\% & 19\% & 12\% & -- & 5\% \\ \hline
-	$64KB$ & 29\% & 29\% & 52\% & 52\% & 19\% & 12\% & -- & 4\% \\ \hline
+	 $4KB$ & 35\% & 35\% & 46\% & 46\% & 19\% & 15\% & -- & 4\% \\ \hline
+	 $8KB$ & 33\% & 33\% & 48\% & 48\% & 19\% & 14\% & -- & 5\% \\ \hline
+	$16KB$ & 32\% & 32\% & 49\% & 49\% & 19\% & 13\% & -- & 6\% \\ \hline
+	$32KB$ & 31\% & 31\% & 50\% & 50\% & 19\% & 12\% & -- & 7\% \\ \hline
+	$64KB$ & 29\% & 29\% & 52\% & 52\% & 19\% & 12\% & -- & 7\% \\ \hline
      $Average$ & 32\% & 32\% & 49\% & 49\% & 19\% & 13\% & -- & 6\% \\ \hline
 \end{tabular}
 \label{tab:portion_van_i7}
@@ -396,7 +396,7 @@ time divided by sample time. ]%
 \begin{tabular}{|l|r|r|r|r|r|r|r|}
 	\hline
 	& \multicolumn{3}{|c|}{taskaff} & \multicolumn{3}{|c|}{vanilla} & A2S\\
-	      & avg    & var     & A2S    & avg    & var     & A2S    & Speedup \\ \hline
+	      & avg    & var     & A2S    & avg    & var     & A2S    & Improvement \\ \hline
 	$4KB$ & 61.44  & 20.38   & 70.47  & 68.25  & 34.02   & 79.91  & 12\%    \\ \hline
 	$8KB$ & 108.22 & 25.54   & 118.32 & 122.42 & 167.94  & 148.34 & 20\%    \\ \hline
        $16KB$ & 206.03 & 77.33   & 223.61 & 236.35 & 586.69  & 284.80 & 21\%    \\ \hline
@@ -405,49 +405,51 @@ time divided by sample time. ]%
 \end{tabular}
 \label{tab:final_time_i7}
 }
+\caption{Data used to calculate speedups and A2S improvements of new version of task-affinity and vanilla on i7}
 \label{tab:final_time_speedup_i7}
-\caption{Data used to calculate speedups of task-affinity and vanilla on i7}
 \end{table}
 
-\begin{figure}[htbp]
+\newpage
+
+\begin{figure}[tbp]
 \centering
 \includegraphics[width=\widefigure]{images/results_i7/time_avg_var_i7.eps}
-\caption{\figurecaption{Average and Variance of execution time of a sample on i7}}
+\caption{\figurecaption{Average and Std. Deviation of execution time of a sample on i7 (new version of task-affinity)}}
 \label{fig:time_avg_var_i7}
 \end{figure}
 
-\begin{figure}[htbp]
+\begin{figure}[tbp]
 \centering
 \includegraphics[width=\widefigure]{images/results_i7/migration_i7.eps}
-\caption{\figurecaption{task migration on i7}}
+\caption{\figurecaption{task migration on i7 (new version of task-affinity)}}
 \label{fig:migration_i7}
 \end{figure}
 
-\begin{figure}[htbp]
+\begin{figure}[tbp]
 \centering
 \includegraphics[width=\widefigure]{images/results_i7/l1_load_store_i7.eps}
-\caption{\figurecaption{L1 Read and Write misses on i7}}
+\caption{\figurecaption{L1 Read and Write misses on i7 (new version of task-affinity)}}
 \label{fig:l1_load_store_i7}
 \end{figure}
 
-\begin{figure}[htbp]
+\begin{figure}[tbp]
 \centering
 \includegraphics[width=\widefigure]{images/results_i7/l3_load_store_i7.eps}
-\caption{\figurecaption{LLC Read and Write misses on i7}}
+\caption{\figurecaption{LLC Read and Write misses on i7 (new version of task-affinity)}}
 \label{fig:l2_load_store_i7}
 \end{figure}
 
-\begin{figure}[htbp]
+\begin{figure}[tbp]
 \centering
 \includegraphics[width=\widefigure]{images/results_i7/push_i7.eps}
-\caption{\figurecaption{Average of execution time of a call to push\_rt\_task and number of call to push\_rt\_task on i7}}
+\caption{\figurecaption{Average of execution time of a call to push\_rt\_task and number of call to push\_rt\_task on i7 (new version of task-affinity)}}
 \label{fig:push_i7}
 \end{figure}
 
-\begin{figure}[htbp]
+\begin{figure}[tbp]
 \centering
 \includegraphics[width=\widefigure]{images/results_i7/pull_i7.eps}
-\caption{\figurecaption{Average of execution time of a call to pull\_rt\_task and number of call to pull\_rt\_task on i7}}
+\caption{\figurecaption{Average of execution time of a call to pull\_rt\_task and number of call to pull\_rt\_task on i7 (new version of task-affinity)}}
 \label{fig:pull_i7}
 \end{figure}
 

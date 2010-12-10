@@ -20,7 +20,7 @@ The scheduling procedure for a task starts when it wakes up. A task can wake up
 for different reasons, i.e. a semaphore becomes unlocked or a new task creation.  In all those cases different
 kernel functions are called, but at the end they call the \texttt{try\_to\_wake\_up} function:
 
-\lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single, label=lis:APIttwu}
+\lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single, label=lis:API_ttwu}
 \lstinputlisting{API_ttwu.c}
 
 where $p$ is the to be waken task.
@@ -37,10 +37,10 @@ class-specific \texttt{select\_task\_rq\_rt}, is called. The function
 \texttt{task\_waking} at line 2420 is class-specific and regards only Fair tasks.
 
 \begin{figure}[h]
-  \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
+  \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps_ttwu}
   \lstinputlisting{ttwu_steps.c}
-  \label{code:steps_ttwu}
   \caption{A portion of the \texttt{try\_to\_wake\_up} method}
+  \label{code:steps_ttwu}
 \end{figure}
 
 \item \texttt{select\_task\_rq\_rt} choose on which CPU $p$ will be executed. It
@@ -55,20 +55,20 @@ if selected CPU is online, in that case returns, otherwise calls
 $p$'s cpuaffinity.
 
 \begin{figure}[h]
-  \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
+  \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:select_task}
   \lstinputlisting{select_task.c}
-  \label{code:select_task}
   \caption{A portion of the \texttt{select\_task\_rq} method}
+  \label{code:select_task}
 \end{figure}
 
 \item acquires the lock on selected runqueue, updates some $p$'s statistics, enqueues 
 $p$ on selected runqueue and calls \texttt{check\_preempt\_rq\_rt} 
 
 \begin{figure}[h]
-  \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
+  \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:check_preempt}
   \lstinputlisting{ttwu_check.c}
-  \label{code:check_preempt}
   \caption{A portion of the \texttt{try\_to\_wake\_up} method}
+  \label{code:check_preempt}
 \end{figure}
 
 \item checks if $p$ has priority greater than priority of the task currently
@@ -77,10 +77,10 @@ function in order to perform the context-switch on the selected runqueue at the
 end of \texttt{try\_to\_wake\_up}.
 
 \begin{figure}[h]
-  \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
+  \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:prio_ttwu}
   \lstinputlisting{check_prio.c}
-  \label{code:prio_ttwu}
   \caption{A portion of the \texttt{check\_preempt\_curr} method}
+  \label{code:prio_ttwu}
 \end{figure}
 
 \item updates $p$'s state to TASK\_RUNNING and calls the class-specific function 
@@ -88,10 +88,10 @@ end of \texttt{try\_to\_wake\_up}.
 \texttt{task\_woken} has effects only for Real-time tasks.
 
 \begin{figure}[h]
-  \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
+  \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:final_ttwu}
   \lstinputlisting{final_ttwu.c}
-  \label{code:final_ttwu}
   \caption{A portion of the \texttt{try\_to\_wake\_up} method}
+  \label{code:final_ttwu}
 \end{figure}
 
 \end{enumerate}
@@ -103,10 +103,10 @@ this problem is resolved by holding the runqueue lock. In the 2.6.34 kernel vers
 was introduced.
 
 \begin{figure}[h]
-  \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:steps}
+  \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single,label=lis:task_states}
   \lstinputlisting{state_list.c}
-  \label{code:task_states}
   \caption{Task's states}
+  \label{code:task_states}
 \end{figure}
 
 TASK\_WAKING is used to indicate someone is already waking up the task, in this way other instances of \texttt{try\_to\_wake\_up} fail when executing 
@@ -144,10 +144,10 @@ In order to decide which tasks must be pushed, a linked list named \textit{pusha
 selects tasks to push from this list. A task is inserted in this list when it is enqueued on a runqueue as show in the snippet below.
 
 \begin{figure}[h]
-  \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single, label=lis:steps}
+  \lstset{basicstyle=\footnotesize, language=c, captionpos=b, frame=single, label=lis:enqueue_push}
   \lstinputlisting{enqueue_push.c}
-  \label{code:ttwu}
   \caption{A portion of the \texttt{enqueue\_task\_rt} method}
+  \label{code:enqueue_push}
 \end{figure}
 
 The current task of any runqueue can't never be in a pushable list, in fact, during a context switch the next task to be executed is removed from the 
@@ -241,7 +241,7 @@ current version of task-affinity in terms of predictability and throughput on di
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/time/time_avg_var_Xeon.eps}
-\caption{\figurecaption{Average and Std. Deviation of execution time of a sample on Xeon}}
+\caption{\figurecaption{Average and Std. Deviation of execution time of a sample on Xeon (current version of task-affinity)}}
 \label{fig:avg_var_xeon}
 \end{figure}
 
@@ -250,28 +250,11 @@ current version of task-affinity in terms of predictability and throughput on di
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/time/time_avg_var_i7.eps}
-\caption{\figurecaption{Average and Std. Deviation of execution time of a sample on i7}}
+\caption{\figurecaption{Average and Std. Deviation of execution time of a sample on i7 (current version of task-affinity)}}
 \label{fig:avg_var_i7}
 \end{figure}
 
-\begin{table}[htbp]
-\begin{center}
-\begin{tabular}{|l|c|c|c|}
-	\hline
-	       & \multicolumn{2}{|c|}{Speedup} \\ 
-	       & Xeon    & i7     \\ \hline
-	$4KB$  & -1.89\% & 2.33\% \\ \hline
-	$8KB$  & -0.82\% & 6.42\% \\ \hline
-	$16KB$ & -0.31\% & 8.42\% \\ \hline
-	$32KB$ & -3.96\% & 6.53\% \\ \hline
-	$64KB$ & -3.25\% & -5.14\% \\ \hline
-\end{tabular}
-\caption{Speedup obtained with task-affinity on different architectures with different buffer}
-\label{tab:speedup_xeon_i7}
-\end{center}
-\end{table}
-
-Speedup on Table \ref{tab:speedup_xeon_i7} is calculated in this way:
+A2S Improvement on Table \ref{tab:speedup_xeon_i7} is calculated in this way:
 
 \begin{equation}
         \frac{A2S_{task\_affinity} - A2S_{vanilla}}{A2S_{vanilla}}
@@ -283,25 +266,42 @@ Where $A2S_{task\_affinity}$ and $A2S_{vanilla}$ are calculated using \ref{eq:me
 As shown in graphics and as summarized in Table \ref{tab:speedup_xeon_i7}, the current version of task-affinity is not effective on Intel Xeon.
 In terms of throughput task-affinity is not better than vanilla, because the average of execution time of a sample is about the same in both kernels 
 and this is true for both the architectures. In term of predictability, on Intel i7, task-affinity is better than vanilla, especially with buffer 
-greater than 32KB. Task-affinity should reduce both L1 and LLC cache misses and, consequently, improve predictability of application. But this fact 
-doesn't occur on Intel Xeon. In Fig. \ref{fig:l1_load_store_Xeon} and \ref{fig:l1_load_store_i7} we can see respectively L1 read and write misses on 
-Xeon and i7.
+greater than 32KB. Task-affinity should reduce both L1 and LLC cache misses, but this fact occurs only on Intel i7, for this reason, on Intel Xeon 
+predictability is degradated,Fig. \ref{fig:l1_load_store_Xeon} and \ref{fig:old_l1_load_store_i7}. 
+
+
+\begin{table}[htbp]
+\begin{center}
+\begin{tabular}{|l|c|c|c|}
+	\hline
+	       & \multicolumn{2}{|c|}{A2S Improvement} \\ 
+	       & Xeon    & i7     \\ \hline
+	$4KB$  & -1.89\% & 2.33\% \\ \hline
+	$8KB$  & -0.82\% & 6.42\% \\ \hline
+	$16KB$ & -0.31\% & 8.42\% \\ \hline
+	$32KB$ & -3.96\% & 6.53\% \\ \hline
+	$64KB$ & -3.25\% & -5.14\% \\ \hline
+\end{tabular}
+\caption{A2S Improvement obtained with task-affinity on different architectures with different buffer}
+\label{tab:speedup_xeon_i7}
+\end{center}
+\end{table}
 
 \begin{figure}[htbp]
  \centering
   \includegraphics[width=\widefigure]{images/cache_miss/l1_load_store_Xeon.eps}
-  \label{fig:l1_load_store_Xeon}
- \caption{\figurecaption{L1 miss rate of read and write instructions on Xeon}}
+  \caption{L1 Read and write misses on Xeon (current version of task-affinity)}
+%  \caption{\figurecaption{L1 miss rate of read and write instructions on Xeon}}
+ \label{fig:l1_load_store_Xeon}
 \end{figure}
 
 \begin{figure}[htbp]
  \centering
   \includegraphics[width=\widefigure]{images/cache_miss/l1_load_store_i7.eps}
-  \label{fig:l1_load_store_i7}
- \caption{\figurecaption{L1 miss rate of read and write instructions on i7}}
+ \caption{L1 Read and Write misses on i7 (current version of task-affinity)}
+% \caption{\figurecaption{L1 miss rate of read and write instructions on i7}}
+ \label{fig:old_l1_load_store_i7}
 \end{figure}
-
-On Intel Xeon read and write miss rates are increased and, consequently, predictability is degradated.
 
 %-----------------------------------------------------------------------------
 \subsection{Impact of task migration on execution time predictability}
@@ -340,7 +340,7 @@ Tab.\ref{tab:assignment} summarizes the relative CPU assignments.
 \begin{table}[tbp]
 \centering%
 \subfigure[All task pinned]{%
- \begin{tabular}{c|c}
+ \begin{tabular}{|c|c|}
 	\hline
 	Task & CPU \\ \hline
 	Wave0 & 1  \\ \hline
@@ -354,7 +354,7 @@ Tab.\ref{tab:assignment} summarizes the relative CPU assignments.
  \label{tab:all_pinned}
 }\hspace{4em}
 \subfigure[Waves pinned]{%
- \begin{tabular}{c|c}
+ \begin{tabular}{|c|c|}
 	\hline
 	Task & CPU \\ \hline
 	Wave0 & 1  \\ \hline
@@ -380,21 +380,21 @@ than 32KB.
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/cpuaff/cpuaff_l1_load_store_Xeon.eps}
-\caption{\figurecaption{L1 miss rate of read and write instructions on Xeon}}
+\caption{\figurecaption{L1 Read and Write misses on Xeon (experiment with pinned tasks)}}
 \label{fig:cpuaff_l1_load_store_xeon}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/cpuaff/cpuaff_acc_l2_load_store_Xeon.eps}
-\caption{\figurecaption{Number of LLC read and write accesses on Xeon}}
+\caption{\figurecaption{Number of LLC Read and Write accesses on Xeon (experiment with pinned tasks)}}
 \label{fig:cpuaff_acc_l2_load_store_xeon}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/cpuaff/cpuaff_l2_load_store_Xeon.eps}
-\caption{\figurecaption{LLC miss rate of read and write instructions on Xeon}}
+\caption{\figurecaption{LLC Read and Write misses on Xeon (experiment with pinned tasks)}}
 \label{fig:cpuaff_l2_load_store_xeon}
 \end{figure}
 \newpage
@@ -402,21 +402,21 @@ than 32KB.
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/cpuaff/cpuaff_l1_load_store_i7.eps}
-\caption{\figurecaption{L1 miss rate of read and write instructions on i7}}
+\caption{\figurecaption{L1 Read and Write misses on i7 (experiment with pinned tasks)}}
 \label{fig:cpuaff_l1_load_i7}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/cpuaff/cpuaff_acc_l3_load_store_i7.eps}
-\caption{\figurecaption{Number of LLC read and write accesses on i7}}
+\caption{\figurecaption{Number of LLC read and write accesses on i7 (experiment with pinned tasks)}}
 \label{fig:cpuaff_acc_l2_load_store_i7}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/cpuaff/cpuaff_l3_load_store_i7.eps}
-\caption{\figurecaption{LLC miss rate of read and write instructions on i7}}
+\caption{\figurecaption{LLC miss rate of read and write instructions on i7 (experiment with pinned tasks)}}
 \label{fig:cpuaff_l1_load_i7}
 \end{figure}
 
@@ -442,7 +442,7 @@ benchmark are compared: in the first run all tasks are pinned, while in the seco
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/cpf_time/time_cpf_var_Xeon_i7.eps}
-\caption{\figurecaption{Std. Deviation of execution time of a sample on Xeon and i7: all task pinned compared vanilla}}
+\caption{\figurecaption{Std. Deviation of execution time of a sample on Xeon and i7 (all task pinned compared vanilla)}}
 \label{fig:time_cpf_var_Xeon_i7}
 \end{figure}
 

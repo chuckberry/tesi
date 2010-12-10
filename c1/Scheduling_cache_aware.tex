@@ -79,15 +79,15 @@ cache coherence:
 
 \begin{description}
 
-\item [Snooping based protocols:] Each cache monitors address lines of shared bus for every memory transaction made by remote processors. Appropriate action
+\item [Snooping based protocols:] each cache monitors address lines of shared bus for every memory transaction made by remote processors. Appropriate action
 is undertaken when data locally cached is modified by this transaction, for example: a write by a remote processor into a data address locally cached 
 results in an invalidation of the local cache copy.
 
-\item [Snarfing based protocols:] A cache controller watches both address and data in an attempt to update its own copy of a memory location when a second 
+\item [Snarfing based protocols:] a cache controller watches both address and data in an attempt to update its own copy of a memory location when a second 
 master modifies a location in main memory. When a write operation is observed to a location that a cache has a copy of, the cache controller updates its 
 own copy of the snarfed memory location with the new data.
 
-\item [Directory-based protocols:] Shared data are placed in a common directory that maintains the coherence between processor caches. 
+\item [Directory-based protocols:] shared data are placed in a common directory that maintains the coherence between processor caches. 
 This directory acts as a look-up table for every processor to verify coherence of data that is currently being read or updated.
 
 \end{description}
@@ -103,24 +103,24 @@ With this protocol, every cache line is marked with one of the following states:
 \begin{description}
 
 \item [Modified:]
-The cache line is present only in one of the local caches, and it has been modified from the value in main memory. Write on a modified cache line are 
+the cache line is present only in one of the local caches, and it has been modified from the value in main memory. Write on a modified cache line are 
 allowed, reads are a bit complicated. The local cache that owns a modified cache line must intercept (snoop) all attempted reads (from all of the other 
 caches in the system) at main memory location that correspond to modified cache line, forcing them to back off, then writing data to main memory and change
 state of cache line to shared state.
  
 \item [Exclusive:]
-The cache line is present only in the current cache, and it matches main memory. It is possible to read/write lines in this state. A cache that owns
+the cache line is present only in the current cache, and it matches main memory. It is possible to read/write lines in this state. A cache that owns
 lines in exclusive state must snoop all read and write transactions from all other cache and if it intercepts some read that regards owned cache line, 
 it changes the state of that line from exclusive to shared. 
 
 \item [Shared:]
-Indicates that this cache line may be stored in other caches and it matches the main memory. It is possible read cache line in this state. Writes to a 
+indicates that this cache line may be stored in other caches and it matches the main memory. It is possible read cache line in this state. Writes to a 
 shared cache line are allowed but before to perform the operation, it is necessary invalidate all other copies in other caches.
 A cache that holds a line in the Shared state must listen for invalidation from other caches, and discard the line (by moving it into Invalid state) on a 
 match.
 
 \item [Invalid:]
-Indicates that this cache line is invalid, read/write operation on invalid cache line are denied
+indicates that this cache line is invalid, read/write operation on invalid cache line are denied
 
 \end{description}
 
@@ -182,7 +182,7 @@ In the table \ref{fig:tab_lat} read latencies recorded during test are showed.
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\widefigure]{images/tab_lat.eps}
-\caption{\figurecaption{read latencies \cite{molka}}}
+\caption{\figurecaption{Read latencies \cite{molka}}}
 \label{fig:tab_lat}
 \end{figure}
 
@@ -191,25 +191,25 @@ In the table \ref{fig:tab_lat} read latencies recorded during test are showed.
 \item[on-chip latencies] These data measure access time to the cache of other cores on the same die. We will see that having an inclusive cache or not
 influence strongly this type of latency. 
 
-\textbf{Nehalem:} A \textit{Shared} cache line in L3 is guaranteed to be valid and it could be in shared or forward state, it can be accessed within 13 ns. 
+\textbf{Nehalem:} a \textit{Shared} cache line in L3 is guaranteed to be valid and it could be in shared or forward state, it can be accessed within 13 ns. 
 An \textit{Exclusive} cache line that has core valid bit set in L3, may has been modified in higher level cache, this fact forces the L3 cache to check the 
 coherency state in the core, therefore the latency increase up to 22.2 ns, furthermore, in the this type of cache, exclusive cache lines can be silently 
 evicted from higher level cache and remain only in L3. The check on coherency state is made also for these lines that are only in L3 cache.
 A read of \textit{Modified} cache line present in other on-chip L1/L2 requires 25.5/28.3 ns, but if a modified line is evicted from L1/L2, it is required a 
 write-back in L3 and an update of the core valid bits. It means that future access at that line will has a latency of 13 ns again.
 
-\textbf{Shanghai:} A \textit{Shared or Exclusive} cache lines from higher level caches need to be fetched from the cores or main memory if no copy exists 
+\textbf{Shanghai:} a \textit{Shared or Exclusive} cache lines from higher level caches need to be fetched from the cores or main memory if no copy exists 
 in the non-inclusive L3 cache. Latency showed in the table indicate that request for lines in these state are serviced by main memory.
 A \textit{Modified} state it's the only state that allow to avoid access to main memory.
 
 \item[off-chip latencies] These data measure access time to the cache of other cores on another die. These latencies include additional penalty for the
 QPI/HT data transfer. We will see that cache coherence protocol influence this type of latencies.
 
-\textbf{Nehalem:} Thanks to inclusive cache, the access to unmodified data is fast. Latency for \textit{Exclusive} cache line include a snoop of one core 
+\textbf{Nehalem:} thanks to inclusive cache, the access to unmodified data is fast. Latency for \textit{Exclusive} cache line include a snoop of one core 
 (63 ns), \textit{Shared} cache line don't require snoop (58 ns). Moreover, latency for \textit{Modified} lines is higher ($> 100 ns$), because the MESIF 
 protocol requires a write back to the main memory.
 
-\textbf{Shanghai:} Cache lines in \textit{Shared} state are fetched from main memory ($> 99 ns$), L3 can satisfies request for \textit{Exclusive} cache lines 
+\textbf{Shanghai:} cache lines in \textit{Shared} state are fetched from main memory ($> 99 ns$), L3 can satisfies request for \textit{Exclusive} cache lines 
 (83 ns). Cache line in \textit{Modified} state can be forwarded to the requesting core from all cache levels, furthermore, thanks to MOESI protocol, a 
 modified cache line in the remote cache can switch to the Owned state and avoid to be written back to main memory.
 
@@ -261,7 +261,7 @@ type of cache aware policies, because they can be integrated in every OS and are
 data locality policies and how they are implemented.
 
 \begin{description}
-\item[Cache aware Fixed priority policy:] To understand this type of policy assume this situation: consider a multicore platform consisting of $M$ cores 
+\item[Cache aware Fixed priority policy:] to understand this type of policy assume this situation: consider a multicore platform consisting of $M$ cores 
 with an on-chip LLC, and a task set $\tau$, in which each task $T$ releases a thread $J_i$ every period $p(T)$. Every released thread is characterized by a 
 worst-case execution time (WCET) denoted by $C(T)$. It means that each thread released by task $T$ has a maximum duration of $C(T)$. For each thread is 
 defined the number $A(J_k)$ that represents the total cache space size used by it: we define this space as per-thread \textit{working set sizes} (WSS). 
@@ -404,7 +404,7 @@ analysis techniques. For details on WCET analysis for Real-time system in multic
 
 \item[Fair cache sharing policy:]
 
-This policy is focused on Fair tasks, therefore it considers an application model with less constraints than to that considered by
+this policy is focused on Fair tasks, therefore it considers an application model with less constraints than to that considered by
 Calandrino et al. This implementation ensures \textit{fair cache sharing}, that is a strategy throughput oriented.
 
 As we have previously seen, a bad combination of coscheduled tasks may cause cache thrashing and, consequently, a variation on task's instruction per cycle
